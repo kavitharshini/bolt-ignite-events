@@ -95,7 +95,10 @@ const Index = () => {
           <div className="mb-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-semibold text-foreground">Upcoming Events</h2>
-              <button className="text-secondary hover:text-secondary-light font-medium transition-colors">
+              <button 
+                onClick={() => window.location.href = "/events"}
+                className="text-secondary hover:text-secondary-light font-medium transition-colors"
+              >
                 View All Events →
               </button>
             </div>
@@ -111,19 +114,28 @@ const Index = () => {
           <div className="bg-gradient-to-br from-card to-muted/30 rounded-lg p-6 border">
             <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <button className="p-4 bg-gradient-to-r from-secondary/10 to-secondary-light/10 border border-secondary/20 rounded-lg hover:from-secondary/20 hover:to-secondary-light/20 transition-all duration-200 text-left group">
+              <button 
+                onClick={() => window.location.href = "/events/create"}
+                className="p-4 bg-gradient-to-r from-secondary/10 to-secondary-light/10 border border-secondary/20 rounded-lg hover:from-secondary/20 hover:to-secondary-light/20 transition-all duration-200 text-left group"
+              >
                 <Calendar className="h-8 w-8 text-secondary mb-2 group-hover:scale-110 transition-transform" />
                 <h4 className="font-semibold text-foreground mb-1">Create New Event</h4>
                 <p className="text-sm text-muted-foreground">Start planning your next event</p>
               </button>
               
-              <button className="p-4 bg-gradient-to-r from-accent/10 to-accent-light/10 border border-accent/20 rounded-lg hover:from-accent/20 hover:to-accent-light/20 transition-all duration-200 text-left group">
+              <button 
+                onClick={() => window.location.href = "/calendar"}
+                className="p-4 bg-gradient-to-r from-accent/10 to-accent-light/10 border border-accent/20 rounded-lg hover:from-accent/20 hover:to-accent-light/20 transition-all duration-200 text-left group"
+              >
                 <MapPin className="h-8 w-8 text-accent mb-2 group-hover:scale-110 transition-transform" />
-                <h4 className="font-semibold text-foreground mb-1">Find Venues</h4>
-                <p className="text-sm text-muted-foreground">Browse available venues</p>
+                <h4 className="font-semibold text-foreground mb-1">View Calendar</h4>
+                <p className="text-sm text-muted-foreground">Check event schedules</p>
               </button>
               
-              <button className="p-4 bg-gradient-to-r from-primary/10 to-primary-light/10 border border-primary/20 rounded-lg hover:from-primary/20 hover:to-primary-light/20 transition-all duration-200 text-left group">
+              <button 
+                onClick={() => window.location.href = "/analytics"}
+                className="p-4 bg-gradient-to-r from-primary/10 to-primary-light/10 border border-primary/20 rounded-lg hover:from-primary/20 hover:to-primary-light/20 transition-all duration-200 text-left group"
+              >
                 <TrendingUp className="h-8 w-8 text-primary mb-2 group-hover:scale-110 transition-transform" />
                 <h4 className="font-semibold text-foreground mb-1">View Analytics</h4>
                 <p className="text-sm text-muted-foreground">Track event performance</p>
