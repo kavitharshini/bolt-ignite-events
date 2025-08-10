@@ -2,16 +2,20 @@ import { Bell, Calendar, Search, User, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useNavigate } from "react-router-dom";
+import emsLogo from "@/assets/ems-logo.png";
 
 const Header = () => {
+  const navigate = useNavigate();
+
   return (
     <header className="bg-card border-b border-border px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
-            <Calendar className="h-8 w-8 text-secondary" />
+            <img src={emsLogo} alt="EMS Logo" className="h-10 w-10 rounded-lg" />
             <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              EventFlow
+              Event Management System
             </h1>
           </div>
           
@@ -25,7 +29,11 @@ const Header = () => {
         </div>
 
         <div className="flex items-center space-x-4">
-          <Button variant="secondary" className="bg-gradient-to-r from-secondary to-secondary-light hover:from-secondary-light hover:to-secondary text-secondary-foreground font-semibold">
+          <Button 
+            onClick={() => navigate("/events/create")}
+            variant="secondary" 
+            className="bg-gradient-to-r from-secondary to-secondary-light hover:from-secondary-light hover:to-secondary text-secondary-foreground font-semibold"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Create Event
           </Button>

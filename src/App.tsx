@@ -10,6 +10,8 @@ import EventList from "./pages/Events/EventList";
 import EventDetails from "./pages/Events/EventDetails";
 import CalendarView from "./pages/Calendar/CalendarView";
 import AnalyticsDashboard from "./pages/Analytics/AnalyticsDashboard";
+import AttendeesPage from "./pages/Attendees/AttendeesPage";
+import SettingsPage from "./pages/Settings/SettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +28,8 @@ const App = () => (
           <Route path="/events/:id" element={<EventDetails />} />
           <Route path="/calendar" element={<CalendarView />} />
           <Route path="/analytics" element={<AnalyticsDashboard />} />
+          <Route path="/attendees" element={<AttendeesPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

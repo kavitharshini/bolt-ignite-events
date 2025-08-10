@@ -179,17 +179,21 @@ const CreateEvent = () => {
                         {errors.maxAttendees && <p className="text-destructive text-sm mt-1">{errors.maxAttendees}</p>}
                       </div>
 
-                      <div>
-                        <label className="text-sm font-medium text-foreground mb-2 block">Ticket Price</label>
-                        <Input
-                          type="number"
-                          value={eventData.ticketPrice}
-                          onChange={(e) => updateField("ticketPrice", e.target.value)}
-                          placeholder="0.00"
-                          min="0"
-                          step="0.01"
-                        />
-                      </div>
+                       <div>
+                         <label className="text-sm font-medium text-foreground mb-2 block">Ticket Price (₹)</label>
+                         <div className="relative">
+                           <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">₹</span>
+                           <Input
+                             type="number"
+                             value={eventData.ticketPrice}
+                             onChange={(e) => updateField("ticketPrice", e.target.value)}
+                             placeholder="0.00"
+                             min="0"
+                             step="0.01"
+                             className="pl-8"
+                           />
+                         </div>
+                       </div>
                     </div>
 
                     <div>
@@ -251,12 +255,12 @@ const CreateEvent = () => {
                         <span>0/{eventData.maxAttendees || "0"} attendees</span>
                       </div>
                       
-                      {eventData.ticketPrice && (
-                        <div className="flex items-center space-x-2">
-                          <DollarSign className="h-4 w-4 text-accent" />
-                          <span>${eventData.ticketPrice}</span>
-                        </div>
-                      )}
+                       {eventData.ticketPrice && (
+                         <div className="flex items-center space-x-2">
+                           <DollarSign className="h-4 w-4 text-accent" />
+                           <span>₹{eventData.ticketPrice}</span>
+                         </div>
+                       )}
                     </div>
 
                     {eventData.category && (
@@ -267,27 +271,35 @@ const CreateEvent = () => {
                   </CardContent>
                 </Card>
 
-                {/* Action Buttons */}
-                <div className="space-y-3">
-                  <Button 
-                    onClick={() => handleSubmit("published")}
-                    className="w-full bg-gradient-to-r from-primary to-primary-light hover:from-primary-light hover:to-primary"
-                    size="lg"
-                  >
-                    <Send className="h-4 w-4 mr-2" />
-                    Publish Event
-                  </Button>
-                  
-                  <Button 
-                    onClick={() => handleSubmit("draft")}
-                    variant="outline"
-                    className="w-full"
-                    size="lg"
-                  >
-                    <Save className="h-4 w-4 mr-2" />
-                    Save as Draft
-                  </Button>
-                </div>
+                 {/* Action Buttons */}
+                 <div className="space-y-3">
+                   <Button 
+                     onClick={() => {
+                       if (validateForm()) {
+                         // Show confirmation before publishing
+                         const confirmed = window.confirm("Are you sure you want to publish this event? Once published, it will be visible to all users.");
+                         if (confirmed) {
+                           handleSubmit("published");
+                         }
+                       }
+                     }}
+                     className="w-full bg-gradient-to-r from-primary to-primary-light hover:from-primary-light hover:to-primary"
+                     size="lg"
+                   >
+                     <Send className="h-4 w-4 mr-2" />
+                     Confirm & Publish Event
+                   </Button>
+                   
+                   <Button 
+                     onClick={() => handleSubmit("draft")}
+                     variant="outline"
+                     className="w-full"
+                     size="lg"
+                   >
+                     <Save className="h-4 w-4 mr-2" />
+                     Save as Draft
+                   </Button>
+                 </div>
               </div>
             </div>
           </div>
