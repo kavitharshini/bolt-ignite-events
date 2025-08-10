@@ -12,6 +12,7 @@ import CalendarView from "./pages/Calendar/CalendarView";
 import AnalyticsDashboard from "./pages/Analytics/AnalyticsDashboard";
 import AttendeesPage from "./pages/Attendees/AttendeesPage";
 import SettingsPage from "./pages/Settings/SettingsPage";
+import LoginPage from "./components/Auth/LoginPage";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          <Route path="/login" element={<LoginPage />} />
           <Route path="/" element={<Index />} />
           <Route path="/events" element={<EventList />} />
           <Route path="/events/create" element={<CreateEvent />} />
