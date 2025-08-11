@@ -12,6 +12,7 @@ import CalendarView from "./pages/Calendar/CalendarView";
 import AnalyticsDashboard from "./pages/Analytics/AnalyticsDashboard";
 import AttendeesPage from "./pages/Attendees/AttendeesPage";
 import SettingsPage from "./pages/Settings/SettingsPage";
+import ProfilePage from "./pages/Profile/ProfilePage";
 import LoginPage from "./components/Auth/LoginPage";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/calendar" element={<CalendarView />} />
           <Route path="/analytics" element={<AnalyticsDashboard />} />
           <Route path="/attendees" element={<AttendeesPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

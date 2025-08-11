@@ -1,4 +1,4 @@
-import { Home, Calendar, CalendarDays, Users, BarChart3, Settings, Plus } from "lucide-react";
+import { Home, Calendar, CalendarDays, Users, BarChart3, Settings, Plus, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -12,6 +12,7 @@ const Sidebar = () => {
     { icon: CalendarDays, label: "Calendar", path: "/calendar" },
     { icon: Users, label: "Attendees", path: "/attendees" },
     { icon: BarChart3, label: "Analytics", path: "/analytics" },
+    { icon: User, label: "Profile", path: "/profile" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
 

@@ -8,8 +8,8 @@ const mockEvents = [
   {
     id: "1",
     title: "Annual Tech Conference 2024",
-    date: "March 15, 2024",
-    time: "9:00 AM - 6:00 PM",
+    date: new Date("2024-03-15").toLocaleDateString(),
+    time: new Date("2024-03-15T09:00:00").toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + " - " + new Date("2024-03-15T18:00:00").toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     venue: "Grand Convention Center",
     attendees: 245,
     maxAttendees: 300,
@@ -18,8 +18,8 @@ const mockEvents = [
   {
     id: "2",
     title: "Product Launch Gala",
-    date: "March 22, 2024",
-    time: "7:00 PM - 11:00 PM",
+    date: new Date("2024-03-22").toLocaleDateString(),
+    time: new Date("2024-03-22T19:00:00").toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + " - " + new Date("2024-03-22T23:00:00").toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     venue: "Luxury Hotel Ballroom",
     attendees: 89,
     maxAttendees: 150,
@@ -28,8 +28,8 @@ const mockEvents = [
   {
     id: "3",
     title: "Team Building Workshop",
-    date: "April 5, 2024",
-    time: "10:00 AM - 4:00 PM",
+    date: new Date("2024-04-05").toLocaleDateString(),
+    time: new Date("2024-04-05T10:00:00").toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + " - " + new Date("2024-04-05T16:00:00").toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     venue: "Corporate Training Center",
     attendees: 42,
     maxAttendees: 50,
