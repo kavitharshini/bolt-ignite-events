@@ -280,31 +280,45 @@ const SettingsPage = () => {
                       </div>
                     </div>
                     
-                    <div>
-                      <Label htmlFor="language">Language</Label>
-                      <select
-                        id="language"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring mt-2"
-                      >
-                        <option value="en">English</option>
-                        <option value="hi">हिंदी (Hindi)</option>
-                        <option value="mr">मराठी (Marathi)</option>
-                        <option value="ta">தமிழ் (Tamil)</option>
-                      </select>
-                    </div>
+                     <div>
+                       <Label htmlFor="language">Language</Label>
+                       <select
+                         id="language"
+                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring mt-2"
+                         defaultValue="en"
+                       >
+                         <option value="en">English</option>
+                         <option value="hi">हिंदी (Hindi)</option>
+                         <option value="mr">मराठी (Marathi)</option>
+                         <option value="ta">தமிழ் (Tamil)</option>
+                         <option value="te">తెలుగు (Telugu)</option>
+                         <option value="bn">বাংলা (Bengali)</option>
+                       </select>
+                     </div>
                     
-                    <div>
-                      <Label htmlFor="timezone">Timezone</Label>
-                      <select
-                        id="timezone"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring mt-2"
-                      >
-                        <option value="Asia/Kolkata">India Standard Time (IST)</option>
-                        <option value="Asia/Dubai">UAE Time</option>
-                        <option value="UTC">UTC</option>
-                      </select>
-                    </div>
-                  </div>
+                     <div>
+                       <Label htmlFor="timezone">Timezone</Label>
+                       <select
+                         id="timezone"
+                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring mt-2"
+                         defaultValue="Asia/Kolkata"
+                       >
+                         <option value="Asia/Kolkata">India Standard Time (IST)</option>
+                         <option value="Asia/Dubai">UAE Time</option>
+                         <option value="Asia/Singapore">Singapore Time</option>
+                         <option value="UTC">UTC</option>
+                         <option value="America/New_York">Eastern Time (US)</option>
+                         <option value="Europe/London">GMT (London)</option>
+                       </select>
+                     </div>
+                   </div>
+                   <Button onClick={() => toast({
+                     title: "Settings Saved",
+                     description: "Your appearance and language preferences have been updated.",
+                   })} className="bg-gradient-to-r from-primary to-primary-light">
+                     <Save className="h-4 w-4 mr-2" />
+                     Save Appearance Settings
+                   </Button>
                 </CardContent>
               </Card>
             </div>

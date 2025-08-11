@@ -293,19 +293,19 @@ const PaymentPage = ({ event }: PaymentPageProps) => {
                 <div className="border-t border-border pt-4 space-y-2">
                   <div className="flex justify-between">
                     <span>Ticket Price</span>
-                    <span>${event.ticketPrice.toLocaleString()}</span>
+                    <span>₹{event.ticketPrice.toLocaleString('en-IN')}</span>
                   </div>
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>Taxes (18%)</span>
-                    <span>${taxes.toLocaleString()}</span>
+                    <span>₹{taxes.toLocaleString('en-IN')}</span>
                   </div>
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>Processing Fee</span>
-                    <span>${processingFee}</span>
+                    <span>₹{processingFee}</span>
                   </div>
                   <div className="border-t border-border pt-2 flex justify-between font-semibold text-lg">
                     <span>Total</span>
-                    <span>${totalAmount.toLocaleString()}</span>
+                    <span>₹{totalAmount.toLocaleString('en-IN')}</span>
                   </div>
                 </div>
 
@@ -323,7 +323,7 @@ const PaymentPage = ({ event }: PaymentPageProps) => {
                   ) : (
                     <div className="flex items-center space-x-2">
                       <Lock className="h-4 w-4" />
-                      <span>Pay ${totalAmount.toLocaleString()}</span>
+                      <span>Pay ₹{totalAmount.toLocaleString('en-IN')}</span>
                     </div>
                   )}
                 </Button>

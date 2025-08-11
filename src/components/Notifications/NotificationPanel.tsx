@@ -28,7 +28,7 @@ const mockNotifications: Notification[] = [
   {
     id: "2",
     title: "Payment Received",
-    message: "$2,500 payment confirmed for Product Launch Gala",
+    message: "₹2,500 payment confirmed for Product Launch Gala",
     type: "payment",
     time: "15 minutes ago",
     read: false,

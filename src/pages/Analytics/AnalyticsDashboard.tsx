@@ -103,7 +103,7 @@ const AnalyticsDashboard = () => {
               
               <StatsCard
                 title="Total Revenue"
-                value={`$${analyticsData.totalRevenue.toLocaleString()}`}
+                value={`₹${analyticsData.totalRevenue.toLocaleString('en-IN')}`}
                 change={`+${analyticsData.growthMetrics.revenue}% from last month`}
                 changeType="positive"
                 icon={DollarSign}
@@ -145,7 +145,7 @@ const AnalyticsDashboard = () => {
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="font-medium">${item.revenue.toLocaleString()}</div>
+                          <div className="font-medium">₹{item.revenue.toLocaleString('en-IN')}</div>
                           <div className="text-xs text-muted-foreground">{item.events} events</div>
                         </div>
                       </div>
@@ -212,7 +212,7 @@ const AnalyticsDashboard = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-bold text-lg">${event.revenue.toLocaleString()}</div>
+                        <div className="font-bold text-lg">₹{event.revenue.toLocaleString('en-IN')}</div>
                         <div className="text-sm text-muted-foreground">Revenue</div>
                       </div>
                     </div>

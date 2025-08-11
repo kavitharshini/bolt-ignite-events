@@ -75,7 +75,7 @@ const Index = () => {
             />
             <StatsCard
               title="Revenue"
-              value="$324,523"
+              value="₹32,45,230"
               change="+8% from last month"
               changeType="positive"
               icon={DollarSign}
