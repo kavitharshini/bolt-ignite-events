@@ -31,21 +31,21 @@ const ProfilePage = () => {
       title: "Tech Conference 2024",
       date: new Date("2024-03-15").toLocaleDateString(),
       attendees: 250,
-      revenue: "₹12,50,000",
+      revenue: "$125,000",
     },
     {
       id: "2", 
       title: "Music Festival",
       date: new Date("2024-04-20").toLocaleDateString(),
       attendees: 1500,
-      revenue: "₹1,27,50,000",
+      revenue: "$1,275,000",
     },
     {
       id: "3",
       title: "Business Summit", 
       date: new Date("2024-05-10").toLocaleDateString(),
       attendees: 180,
-      revenue: "₹6,30,000",
+      revenue: "$63,000",
     },
   ]);
 

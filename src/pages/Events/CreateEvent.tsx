@@ -180,9 +180,9 @@ const CreateEvent = () => {
                       </div>
 
                        <div>
-                         <label className="text-sm font-medium text-foreground mb-2 block">Ticket Price (₹)</label>
+                         <label className="text-sm font-medium text-foreground mb-2 block">Ticket Price ($)</label>
                          <div className="relative">
-                           <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">₹</span>
+                           <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
                            <Input
                              type="number"
                              value={eventData.ticketPrice}
@@ -258,7 +258,7 @@ const CreateEvent = () => {
                        {eventData.ticketPrice && (
                          <div className="flex items-center space-x-2">
                            <DollarSign className="h-4 w-4 text-accent" />
-                           <span>₹{eventData.ticketPrice}</span>
+                           <span>${eventData.ticketPrice}</span>
                          </div>
                        )}
                     </div>
