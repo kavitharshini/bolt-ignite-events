@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import StatsCard from "@/components/Dashboard/StatsCard";
 import Header from "@/components/Layout/Header";
 import Sidebar from "@/components/Layout/Sidebar";
+import Breadcrumb from "@/components/Layout/Breadcrumb";
 
 const AnalyticsDashboard = () => {
   const [timeRange, setTimeRange] = useState("30d");
@@ -53,7 +54,7 @@ const AnalyticsDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header showBackButton={true} />
       
       <div className="flex">
         <Sidebar />

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Eye, EyeOff, Lock, Mail, User, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, User, ArrowRight, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +50,16 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
+      {/* Home Button */}
+      <Button 
+        variant="ghost" 
+        size="icon"
+        onClick={() => navigate("/")}
+        className="absolute top-4 left-4 hover:bg-primary/10"
+      >
+        <Home className="h-5 w-5" />
+      </Button>
+      
       <div className="w-full max-w-md space-y-6">
         {/* Logo & Title */}
         <div className="text-center space-y-4">

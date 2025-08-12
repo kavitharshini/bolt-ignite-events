@@ -82,7 +82,7 @@ const EventDetails = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header showBackButton={true} />
       
       <div className="flex">
         <Sidebar />

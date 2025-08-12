@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Layout/Header";
 import Sidebar from "@/components/Layout/Sidebar";
+import Breadcrumb from "@/components/Layout/Breadcrumb";
 
 const CreateEvent = () => {
   const navigate = useNavigate();
@@ -65,13 +66,14 @@ const CreateEvent = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header showBackButton={true} />
       
       <div className="flex">
         <Sidebar />
         
         <main className="flex-1 p-8">
           <div className="max-w-4xl mx-auto">
+            <Breadcrumb />
             {/* Header */}
             <div className="flex items-center space-x-4 mb-8">
               <Button 
