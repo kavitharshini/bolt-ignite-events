@@ -3,6 +3,8 @@ import Header from "@/components/Layout/Header";
 import Sidebar from "@/components/Layout/Sidebar";
 import EventCard from "@/components/Dashboard/EventCard";
 import StatsCard from "@/components/Dashboard/StatsCard";
+import useKeyboardShortcuts from "@/hooks/useKeyboardShortcuts";
+import useQuickStats from "@/hooks/useQuickStats";
 
 const mockEvents = [
   {
@@ -38,6 +40,9 @@ const mockEvents = [
 ];
 
 const Index = () => {
+  useKeyboardShortcuts();
+  const stats = useQuickStats();
+  
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -59,7 +64,7 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <StatsCard
               title="Total Events"
-              value="24"
+              value={stats.totalEvents.toString()}
               change="+12% from last month"
               changeType="positive"
               icon={Calendar}
@@ -67,7 +72,7 @@ const Index = () => {
             />
             <StatsCard
               title="Total Attendees"
-              value="1,247"
+              value={stats.totalAttendees.toLocaleString()}
               change="+18% from last month"
               changeType="positive"
               icon={Users}
@@ -75,7 +80,7 @@ const Index = () => {
             />
             <StatsCard
               title="Revenue"
-              value="₹32,45,230"
+              value={stats.revenue}
               change="+8% from last month"
               changeType="positive"
               icon={DollarSign}
@@ -83,7 +88,7 @@ const Index = () => {
             />
             <StatsCard
               title="Success Rate"
-              value="94%"
+              value={stats.successRate}
               change="+2% from last month"
               changeType="positive"
               icon={CheckCircle}

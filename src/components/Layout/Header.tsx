@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import emsLogo from "@/assets/ems-logo.png";
 import NotificationPanel from "@/components/Notifications/NotificationPanel";
 import SearchCommand from "./SearchCommand";
+import KeyboardShortcutsHelp from "./KeyboardShortcutsHelp";
 
 const Header = ({ showBackButton = false }: { showBackButton?: boolean }) => {
   const navigate = useNavigate();
@@ -69,6 +70,8 @@ const Header = ({ showBackButton = false }: { showBackButton?: boolean }) => {
             <Plus className="h-4 w-4 mr-2" />
             Create Event
           </Button>
+          
+          <KeyboardShortcutsHelp />
           
           <Popover open={notificationOpen} onOpenChange={setNotificationOpen}>
             <PopoverTrigger asChild>
