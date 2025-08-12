@@ -48,7 +48,7 @@ const Index = () => {
         <main className="flex-1 p-8">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">
-              Welcome back, Sarah! 👋
+              Welcome back, Arjun! 👋
             </h1>
             <p className="text-muted-foreground">
               Here's what's happening with your events today.
@@ -128,7 +128,7 @@ const Index = () => {
                 className="p-4 bg-gradient-to-r from-accent/10 to-accent-light/10 border border-accent/20 rounded-lg hover:from-accent/20 hover:to-accent-light/20 transition-all duration-200 text-left group"
               >
                 <MapPin className="h-8 w-8 text-accent mb-2 group-hover:scale-110 transition-transform" />
-                <h4 className="font-semibold text-foreground mb-1">View Calendar</h4>
+                <h4 className="font-semibold text-foreground mb-1">View Indian Calendar</h4>
                 <p className="text-sm text-muted-foreground">Check event schedules</p>
               </button>
               
