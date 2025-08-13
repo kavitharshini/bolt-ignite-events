@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "@/components/Layout/Header";
 import Sidebar from "@/components/Layout/Sidebar";
 import { Button } from "@/components/ui/button";
@@ -10,20 +10,37 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Mail, Phone, User, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useUser } from "@/contexts/UserContext";
 
 const ProfilePage = () => {
   const { toast } = useToast();
+  const { user, updateUser } = useUser();
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
-    name: "Arjun Sharma",
-    email: "arjun.sharma@email.com",
-    phone: "+91 98765 43210",
-    bio: "Event management professional with 5+ years of experience in organizing corporate events and conferences.",
-    location: "Mumbai, Maharashtra",
-    company: "EventMaster Solutions",
-    role: "Senior Event Manager",
-    joinDate: new Date("2023-01-15").toLocaleDateString(),
+    name: user?.name || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
+    bio: user?.bio || "",
+    location: user?.location || "",
+    company: user?.company || "",
+    role: user?.role || "",
+    joinDate: user?.joinDate || "",
   });
+
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        bio: user.bio,
+        location: user.location,
+        company: user.company,
+        role: user.role,
+        joinDate: user.joinDate,
+      });
+    }
+  }, [user]);
 
   const [eventsCreated] = useState([
     {
@@ -50,6 +67,17 @@ const ProfilePage = () => {
   ]);
 
   const handleSave = () => {
+    // Update the user context with new data
+    updateUser({
+      name: profileData.name,
+      email: profileData.email,
+      phone: profileData.phone,
+      bio: profileData.bio,
+      location: profileData.location,
+      company: profileData.company,
+      role: profileData.role,
+    });
+    
     setIsEditing(false);
     toast({
       title: "Profile Updated",

@@ -5,6 +5,7 @@ import EventCard from "@/components/Dashboard/EventCard";
 import StatsCard from "@/components/Dashboard/StatsCard";
 import useKeyboardShortcuts from "@/hooks/useKeyboardShortcuts";
 import useQuickStats from "@/hooks/useQuickStats";
+import { useUser } from "@/contexts/UserContext";
 
 const mockEvents = [
   {
@@ -42,6 +43,7 @@ const mockEvents = [
 const Index = () => {
   useKeyboardShortcuts();
   const stats = useQuickStats();
+  const { user } = useUser();
   
   return (
     <div className="min-h-screen bg-background">
@@ -53,7 +55,7 @@ const Index = () => {
         <main className="flex-1 p-8">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">
-              Welcome back, Arjun! 👋
+              Welcome back, {user?.name || 'User'}! 👋
             </h1>
             <p className="text-muted-foreground">
               Here's what's happening with your events today.
