@@ -136,19 +136,16 @@ const Header = ({ showBackButton = false }: { showBackButton?: boolean }) => {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/login")}
-              className="relative"
-            >
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="/placeholder-avatar.jpg" alt="User" />
-                <AvatarFallback className="bg-primary text-primary-foreground">
-                  <User className="h-4 w-4" />
-                </AvatarFallback>
-              </Avatar>
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => navigate("/login")}
+                className="h-10"
+              >
+                <User className="h-4 w-4 mr-2" />
+                Login
+              </Button>
+            </div>
           )}
         </div>
       </div>

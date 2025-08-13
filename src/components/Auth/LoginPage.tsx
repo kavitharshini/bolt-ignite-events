@@ -6,11 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useUser } from "@/contexts/UserContext";
 import emsLogo from "@/assets/ems-logo.png";
 
 const LoginPage = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { login } = useUser();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [userType, setUserType] = useState<'user' | 'admin'>('user');
@@ -34,14 +36,27 @@ const LoginPage = () => {
     
     // Simulate login process
     setTimeout(() => {
+      // Create user data based on type and email
+      const userData = {
+        id: userType === 'admin' ? "admin-1" : "user-1",
+        name: userType === 'admin' ? "Admin User" : "John Doe",
+        email: formData.email,
+        phone: userType === 'admin' ? "+91 99999 99999" : "+91 98765 43210",
+        bio: userType === 'admin' ? "System Administrator" : "Event attendee and organizer",
+        location: "Mumbai, Maharashtra",
+        company: userType === 'admin' ? "EventMaster Admin" : "EventMaster Solutions",
+        role: userType === 'admin' ? "Administrator" : "Event Manager",
+        joinDate: new Date().toLocaleDateString(),
+        isAdmin: userType === 'admin',
+        avatar: ""
+      };
+
+      login(userData);
+      
       toast({
         title: "Login Successful",
         description: `Welcome back, ${userType}!`,
       });
-      
-      // Store user type in localStorage for demo
-      localStorage.setItem('userRole', userType);
-      localStorage.setItem('isAuthenticated', 'true');
       
       navigate("/");
       setIsLoading(false);

@@ -46,12 +46,22 @@ const CreateEvent = () => {
   const handleSubmit = (status: "draft" | "published") => {
     if (!validateForm()) return;
     
-    const finalEventData = { ...eventData, status };
-    console.log("Creating event:", finalEventData);
+    const finalEventData = { 
+      ...eventData, 
+      status,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    // Store event in localStorage for demo purposes
+    const existingEvents = JSON.parse(localStorage.getItem('events') || '[]');
+    existingEvents.push(finalEventData);
+    localStorage.setItem('events', JSON.stringify(existingEvents));
     
     toast({
-      title: status === "draft" ? "Event Saved as Draft" : "Event Published",
-      description: `"${eventData.title}" has been ${status === "draft" ? "saved" : "published"} successfully.`,
+      title: status === "draft" ? "Event Saved as Draft" : "Event Published Successfully!",
+      description: `"${eventData.title}" has been ${status === "draft" ? "saved as draft" : "published and is now live"}.`,
     });
     
     navigate("/events");
