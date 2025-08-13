@@ -21,7 +21,7 @@ const mockEvents = [
 ];
 
 const mockAttendees = [
-  { id: "1", name: "Arjun Sharma", type: "attendee", email: "arjun@company.com", events: 3 },
+  { id: "1", name: "Bug Hunters", type: "attendee", email: "bughunters@company.com", events: 3 },
   { id: "2", name: "Priya Patel", type: "attendee", email: "priya@company.com", events: 2 },
   { id: "3", name: "Rahul Kumar", type: "attendee", email: "rahul@company.com", events: 5 },
 ];

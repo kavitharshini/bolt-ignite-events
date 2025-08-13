@@ -34,13 +34,13 @@ export const useUser = () => {
 
 const defaultUser: User = {
   id: "1",
-  name: "Arjun Sharma",
-  email: "arjun.sharma@email.com",
+  name: "Bug Hunters",
+  email: "bughunters@email.com",
   phone: "+91 98765 43210",
-  bio: "Event management professional with 5+ years of experience in organizing corporate events and conferences.",
+  bio: "Professional bug hunting team with 5+ years of experience in finding and fixing software issues.",
   location: "Mumbai, Maharashtra",
   company: "EventMaster Solutions",
-  role: "Senior Event Manager",
+  role: "Senior Bug Hunter",
   joinDate: new Date("2023-01-15").toLocaleDateString(),
   isAdmin: true,
 };
