@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Settings, User, Bell, Shield, CreditCard, Globe, Moon, Sun, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,20 +6,32 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useUser } from "@/contexts/UserContext";
 import Header from "@/components/Layout/Header";
 import Sidebar from "@/components/Layout/Sidebar";
-import Breadcrumb from "@/components/Layout/Breadcrumb";
 
 const SettingsPage = () => {
   const { toast } = useToast();
+  const { user, updateUser } = useUser();
   const [isDarkMode, setIsDarkMode] = useState(false);
   
   const [profileData, setProfileData] = useState({
-    name: "Admin User",
-    email: "admin@eventms.com",
-    phone: "+91 98765 43210",
-    organization: "Event Management Pro"
+    name: user?.name || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
+    organization: user?.company || ""
   });
+
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        organization: user.company
+      });
+    }
+  }, [user]);
 
   const [notificationSettings, setNotificationSettings] = useState({
     emailNotifications: true,
@@ -36,6 +48,14 @@ const SettingsPage = () => {
   });
 
   const handleSaveProfile = () => {
+    if (user) {
+      updateUser({
+        name: profileData.name,
+        email: profileData.email,
+        phone: profileData.phone,
+        company: profileData.organization
+      });
+    }
     toast({
       title: "Profile Updated",
       description: "Your profile information has been saved successfully.",

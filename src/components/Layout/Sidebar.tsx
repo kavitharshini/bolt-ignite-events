@@ -1,12 +1,15 @@
-import { Home, Calendar, CalendarDays, Users, BarChart3, Settings, Plus, User } from "lucide-react";
+import { Home, Calendar, CalendarDays, Users, BarChart3, Settings, Plus, User, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useUser } from "@/contexts/UserContext";
 
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useUser();
   
-  const menuItems = [
+  // Different menu items based on user role
+  const adminMenuItems = [
     { icon: Home, label: "Dashboard", path: "/" },
     { icon: Calendar, label: "Events", path: "/events" },
     { icon: CalendarDays, label: "Calendar", path: "/calendar" },
@@ -16,6 +19,15 @@ const Sidebar = () => {
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
 
+  const userMenuItems = [
+    { icon: Calendar, label: "Browse Events", path: "/events" },
+    { icon: BookOpen, label: "My Bookings", path: "/bookings" },
+    { icon: User, label: "Profile", path: "/profile" },
+    { icon: Settings, label: "Settings", path: "/settings" },
+  ];
+
+  const menuItems = user?.isAdmin ? adminMenuItems : userMenuItems;
+
   const isActive = (path: string) => {
     if (path === "/") return location.pathname === "/";
     return location.pathname.startsWith(path);
@@ -23,15 +35,17 @@ const Sidebar = () => {
 
   return (
     <aside className="bg-card border-r border-border w-64 flex flex-col">
-      <div className="p-6 border-b border-border">
-        <Button 
-          onClick={() => navigate("/events/create")}
-          className="w-full bg-gradient-to-r from-primary to-primary-light hover:from-primary-light hover:to-primary"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Create Event
-        </Button>
-      </div>
+      {user?.isAdmin && (
+        <div className="p-6 border-b border-border">
+          <Button 
+            onClick={() => navigate("/events/create")}
+            className="w-full bg-gradient-to-r from-primary to-primary-light hover:from-primary-light hover:to-primary"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Event
+          </Button>
+        </div>
+      )}
       
       <nav className="p-6">
         <ul className="space-y-2">
@@ -53,17 +67,19 @@ const Sidebar = () => {
         </ul>
       </nav>
       
-      <div className="p-4 border-t border-border mt-auto">
-        <div className="bg-gradient-to-br from-secondary/10 to-accent/10 rounded-lg p-4 border border-secondary/20">
-          <h3 className="text-sm font-semibold text-foreground mb-1">Upgrade to Pro</h3>
-          <p className="text-xs text-muted-foreground mb-3">
-            Unlock advanced features and unlimited events
-          </p>
-          <button className="w-full bg-gradient-to-r from-secondary to-secondary-light text-secondary-foreground text-xs font-semibold py-2 px-3 rounded-md hover:shadow-lg transition-all duration-200">
-            Upgrade Now
-          </button>
+      {!user?.isAdmin && (
+        <div className="p-4 border-t border-border mt-auto">
+          <div className="bg-gradient-to-br from-secondary/10 to-accent/10 rounded-lg p-4 border border-secondary/20">
+            <h3 className="text-sm font-semibold text-foreground mb-1">Upgrade to Pro</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Get premium features and priority booking
+            </p>
+            <button className="w-full bg-gradient-to-r from-secondary to-secondary-light text-secondary-foreground text-xs font-semibold py-2 px-3 rounded-md hover:shadow-lg transition-all duration-200">
+              Upgrade Now
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </aside>
   );
 };
