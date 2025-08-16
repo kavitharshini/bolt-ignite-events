@@ -35,17 +35,15 @@ const Sidebar = () => {
 
   return (
     <aside className="bg-card border-r border-border w-64 flex flex-col">
-      {user?.isAdmin && (
-        <div className="p-6 border-b border-border">
-          <Button 
-            onClick={() => navigate("/events/create")}
-            className="w-full bg-gradient-to-r from-primary to-primary-light hover:from-primary-light hover:to-primary"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Create Event
-          </Button>
-        </div>
-      )}
+      <div className="p-6 border-b border-border">
+        <Button 
+          onClick={() => navigate("/events/create")}
+          className="w-full bg-gradient-to-r from-primary to-primary-light hover:from-primary-light hover:to-primary"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Create Event
+        </Button>
+      </div>
       
       <nav className="p-6">
         <ul className="space-y-2">

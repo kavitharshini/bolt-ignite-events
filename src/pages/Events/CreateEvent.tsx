@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Calendar, MapPin, Users, Clock, DollarSign, ArrowLeft, Save, Send } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, DollarSign, ArrowLeft, Save, Send, Camera, UtensilsCrossed, Music, Palette, Car, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,8 @@ const CreateEvent = () => {
     maxAttendees: "",
     ticketPrice: "",
     category: "",
-    status: "draft"
+    status: "draft",
+    services: [] as string[]
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -67,11 +68,20 @@ const CreateEvent = () => {
     navigate("/events");
   };
 
-  const updateField = (field: string, value: string) => {
+  const updateField = (field: string, value: string | string[]) => {
     setEventData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: "" }));
     }
+  };
+
+  const toggleService = (service: string) => {
+    setEventData(prev => ({
+      ...prev,
+      services: prev.services.includes(service)
+        ? prev.services.filter(s => s !== service)
+        : [...prev.services, service]
+    }));
   };
 
   return (
@@ -226,6 +236,68 @@ const CreateEvent = () => {
                     </div>
                   </CardContent>
                 </Card>
+
+                <Card className="border-0 bg-gradient-to-br from-card to-muted/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Palette className="h-5 w-5 text-accent" />
+                      <span>Event Services</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Select additional services for your event to enhance the experience
+                    </p>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {[
+                        { id: "catering", label: "Catering & Food", icon: UtensilsCrossed, color: "text-orange-500" },
+                        { id: "photography", label: "Photography", icon: Camera, color: "text-purple-500" },
+                        { id: "music", label: "Audio/Music", icon: Music, color: "text-green-500" },
+                        { id: "decoration", label: "Decoration", icon: Palette, color: "text-pink-500" },
+                        { id: "transport", label: "Transportation", icon: Car, color: "text-blue-500" },
+                        { id: "security", label: "Security", icon: Shield, color: "text-red-500" },
+                      ].map((service) => (
+                        <button
+                          key={service.id}
+                          type="button"
+                          onClick={() => toggleService(service.id)}
+                          className={`p-3 rounded-lg border-2 transition-all duration-200 text-left ${
+                            eventData.services.includes(service.id)
+                              ? "border-primary bg-primary/10 shadow-sm"
+                              : "border-border hover:border-primary/50 hover:bg-accent/50"
+                          }`}
+                        >
+                          <service.icon className={`h-5 w-5 ${service.color} mb-2`} />
+                          <p className="text-sm font-medium text-foreground">{service.label}</p>
+                        </button>
+                      ))}
+                    </div>
+                    
+                    {eventData.services.length > 0 && (
+                      <div className="mt-4 p-3 bg-accent/30 rounded-lg">
+                        <p className="text-sm font-medium text-foreground mb-2">Selected Services:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {eventData.services.map((serviceId) => {
+                            const service = [
+                              { id: "catering", label: "Catering & Food" },
+                              { id: "photography", label: "Photography" },
+                              { id: "music", label: "Audio/Music" },
+                              { id: "decoration", label: "Decoration" },
+                              { id: "transport", label: "Transportation" },
+                              { id: "security", label: "Security" },
+                            ].find(s => s.id === serviceId);
+                            return (
+                              <Badge key={serviceId} variant="secondary" className="text-xs">
+                                {service?.label}
+                              </Badge>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
 
               {/* Preview */}
@@ -275,12 +347,40 @@ const CreateEvent = () => {
                        )}
                     </div>
 
-                    {eventData.category && (
+                     {eventData.category && (
                       <Badge variant="secondary" className="capitalize">
                         {eventData.category}
                       </Badge>
                     )}
-                  </CardContent>
+
+                    {eventData.services.length > 0 && (
+                      <div className="mt-4">
+                        <p className="text-sm font-medium text-foreground mb-2">Services:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {eventData.services.slice(0, 3).map((serviceId) => {
+                            const service = [
+                              { id: "catering", label: "Food" },
+                              { id: "photography", label: "Photo" },
+                              { id: "music", label: "Audio" },
+                              { id: "decoration", label: "Decor" },
+                              { id: "transport", label: "Transport" },
+                              { id: "security", label: "Security" },
+                            ].find(s => s.id === serviceId);
+                            return (
+                              <Badge key={serviceId} variant="outline" className="text-xs">
+                                {service?.label}
+                              </Badge>
+                            );
+                          })}
+                          {eventData.services.length > 3 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{eventData.services.length - 3} more
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                   </CardContent>
                 </Card>
 
                  {/* Action Buttons */}

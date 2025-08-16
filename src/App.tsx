@@ -40,7 +40,7 @@ const App = () => (
               </RoleBasedRoute>
             } />
             <Route path="/events/create" element={
-              <RoleBasedRoute adminOnly>
+              <RoleBasedRoute>
                 <CreateEvent />
               </RoleBasedRoute>
             } />
