@@ -37,9 +37,19 @@ const EventCard = ({ event }: EventCardProps) => {
     <Card className="group hover:shadow-lg transition-all duration-300 border-0 bg-gradient-to-br from-card to-muted/30 hover:from-card hover:to-muted/50">
       <CardContent className="p-0">
         <div className="relative">
-          <div className="h-48 bg-gradient-to-br from-secondary/20 to-accent/20 rounded-t-lg flex items-center justify-center">
-            <Calendar className="h-16 w-16 text-secondary/60" />
-          </div>
+          {event.image ? (
+            <div className="h-48 overflow-hidden rounded-t-lg">
+              <img 
+                src={event.image} 
+                alt={event.title}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+            </div>
+          ) : (
+            <div className="h-48 bg-gradient-to-br from-secondary/20 to-accent/20 rounded-t-lg flex items-center justify-center">
+              <Calendar className="h-16 w-16 text-secondary/60" />
+            </div>
+          )}
           <div className="absolute top-3 right-3">
             <Button variant="ghost" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background">
               <MoreVertical className="h-4 w-4" />

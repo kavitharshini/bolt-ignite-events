@@ -1,11 +1,15 @@
-import { Calendar, Users, MapPin, TrendingUp, DollarSign, CheckCircle } from "lucide-react";
+import { Calendar, Users, MapPin, TrendingUp, DollarSign, CheckCircle, Ticket } from "lucide-react";
 import Header from "@/components/Layout/Header";
 import Sidebar from "@/components/Layout/Sidebar";
 import EventCard from "@/components/Dashboard/EventCard";
+import BookingCard from "@/components/Dashboard/BookingCard";
 import StatsCard from "@/components/Dashboard/StatsCard";
 import useKeyboardShortcuts from "@/hooks/useKeyboardShortcuts";
 import useQuickStats from "@/hooks/useQuickStats";
 import { useUser } from "@/contexts/UserContext";
+import techConferenceImg from "@/assets/event-tech-conference.jpg";
+import productLaunchImg from "@/assets/event-product-launch.jpg";
+import teamBuildingImg from "@/assets/event-team-building.jpg";
 
 const mockEvents = [
   {
@@ -17,6 +21,7 @@ const mockEvents = [
     attendees: 245,
     maxAttendees: 300,
     status: "published" as const,
+    image: techConferenceImg,
   },
   {
     id: "2",
@@ -27,6 +32,7 @@ const mockEvents = [
     attendees: 89,
     maxAttendees: 150,
     status: "draft" as const,
+    image: productLaunchImg,
   },
   {
     id: "3",
@@ -37,6 +43,34 @@ const mockEvents = [
     attendees: 42,
     maxAttendees: 50,
     status: "published" as const,
+    image: teamBuildingImg,
+  },
+];
+
+const mockBookings = [
+  {
+    id: "1",
+    eventTitle: "Annual Tech Conference 2024",
+    eventDate: new Date("2024-03-15").toLocaleDateString(),
+    eventTime: "09:00 AM - 06:00 PM",
+    venue: "Grand Convention Center",
+    ticketType: "VIP Pass",
+    price: "₹2,500",
+    status: "confirmed" as const,
+    attendees: 2,
+    image: techConferenceImg,
+  },
+  {
+    id: "2",
+    eventTitle: "Product Launch Gala",
+    eventDate: new Date("2024-03-22").toLocaleDateString(),
+    eventTime: "07:00 PM - 11:00 PM",
+    venue: "Luxury Hotel Ballroom",
+    ticketType: "Standard",
+    price: "₹1,800",
+    status: "pending" as const,
+    attendees: 1,
+    image: productLaunchImg,
   },
 ];
 
@@ -98,10 +132,36 @@ const Index = () => {
             />
           </div>
 
+          {/* Recent Bookings */}
+          {!user?.isAdmin && (
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-semibold text-foreground flex items-center space-x-2">
+                  <Ticket className="h-6 w-6 text-secondary" />
+                  <span>My Recent Bookings</span>
+                </h2>
+                <button 
+                  onClick={() => window.location.href = "/bookings"}
+                  className="text-secondary hover:text-secondary-light font-medium transition-colors"
+                >
+                  View All Bookings →
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {mockBookings.map((booking) => (
+                  <BookingCard key={booking.id} booking={booking} />
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Upcoming Events */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-semibold text-foreground">Upcoming Events</h2>
+              <h2 className="text-2xl font-semibold text-foreground">
+                {user?.isAdmin ? "Manage Events" : "Upcoming Events"}
+              </h2>
               <button 
                 onClick={() => window.location.href = "/events"}
                 className="text-secondary hover:text-secondary-light font-medium transition-colors"
@@ -111,7 +171,7 @@ const Index = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {mockEvents.map((event) => (
+              {mockEvents.slice(0, user?.isAdmin ? 3 : 2).map((event) => (
                 <EventCard key={event.id} event={event} />
               ))}
             </div>

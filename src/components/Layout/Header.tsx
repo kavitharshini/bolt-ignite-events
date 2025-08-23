@@ -6,7 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import emsLogo from "@/assets/ems-logo.png";
+import emsLogo from "@/assets/ems-logo-new.png";
 import NotificationPanel from "@/components/Notifications/NotificationPanel";
 import SearchCommand from "./SearchCommand";
 import { useUser } from "@/contexts/UserContext";
@@ -45,7 +45,7 @@ const Header = ({ showBackButton = false }: { showBackButton?: boolean }) => {
             <Home className="h-5 w-5" />
           </Button>
           <div className="flex items-center space-x-2">
-            <img src={emsLogo} alt="EMS Logo" className="h-10 w-10 rounded-lg" />
+            <img src={emsLogo} alt="EMS Logo" className="h-12 w-12 rounded-lg" />
             <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               Event Management System
             </h1>
