@@ -1,58 +1,133 @@
 import { useState } from "react";
-import { Calendar, MapPin, Users, Clock, DollarSign, ArrowLeft, Save, Send, Camera, UtensilsCrossed, Music, Palette, Car, Shield } from "lucide-react";
+import { 
+  Calendar, MapPin, Users, Clock, DollarSign, ArrowLeft, Save, Send, 
+  Camera, UtensilsCrossed, Music, Palette, Car, Shield, Sparkles, 
+  CreditCard, Star, ChevronRight, CheckCircle, Building, Ticket,
+  Banknote, Smartphone, Wallet, Lock, Eye, ImageIcon
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Layout/Header";
 import Sidebar from "@/components/Layout/Sidebar";
 import Breadcrumb from "@/components/Layout/Breadcrumb";
+import { Separator } from "@/components/ui/separator";
+
+type Step = "details" | "services" | "payment" | "review";
 
 const CreateEvent = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
+  const [currentStep, setCurrentStep] = useState<Step>("details");
   const [eventData, setEventData] = useState({
     title: "",
     description: "",
     date: "",
     time: "",
+    endTime: "",
     venue: "",
+    address: "",
     maxAttendees: "",
     ticketPrice: "",
     category: "",
+    eventType: "",
     status: "draft",
-    services: [] as string[]
+    services: [] as string[],
+    coverImage: "",
+    tags: [] as string[]
+  });
+
+  const [paymentData, setPaymentData] = useState({
+    method: "" as "card" | "upi" | "netbanking" | "wallet" | "",
+    cardNumber: "",
+    expiryMonth: "",
+    expiryYear: "",
+    cvv: "",
+    nameOnCard: "",
+    upiId: "",
+    bankName: "",
+    walletProvider: ""
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const validateForm = () => {
+  const steps: { id: Step; label: string; icon: any }[] = [
+    { id: "details", label: "Event Details", icon: Calendar },
+    { id: "services", label: "Services", icon: Sparkles },
+    { id: "payment", label: "Payment", icon: CreditCard },
+    { id: "review", label: "Review", icon: Eye }
+  ];
+
+  const validateStep = (step: Step): boolean => {
     const newErrors: Record<string, string> = {};
     
-    if (!eventData.title.trim()) newErrors.title = "Title is required";
-    if (!eventData.date) newErrors.date = "Date is required";
-    if (!eventData.time) newErrors.time = "Time is required";
-    if (!eventData.venue.trim()) newErrors.venue = "Venue is required";
-    if (!eventData.maxAttendees || parseInt(eventData.maxAttendees) <= 0) {
-      newErrors.maxAttendees = "Valid attendee count required";
+    if (step === "details") {
+      if (!eventData.title.trim()) newErrors.title = "Event title is required";
+      if (!eventData.date) newErrors.date = "Date is required";
+      if (!eventData.time) newErrors.time = "Start time is required";
+      if (!eventData.venue.trim()) newErrors.venue = "Venue is required";
+      if (!eventData.maxAttendees || parseInt(eventData.maxAttendees) <= 0) {
+        newErrors.maxAttendees = "Valid attendee count required";
+      }
+      if (!eventData.category) newErrors.category = "Please select a category";
+    }
+
+    if (step === "payment" && eventData.ticketPrice && parseFloat(eventData.ticketPrice) > 0) {
+      if (!paymentData.method) newErrors.paymentMethod = "Please select a payment method";
+      if (paymentData.method === "card") {
+        if (!paymentData.cardNumber) newErrors.cardNumber = "Card number required";
+        if (!paymentData.expiryMonth || !paymentData.expiryYear) newErrors.expiry = "Expiry date required";
+        if (!paymentData.cvv) newErrors.cvv = "CVV required";
+        if (!paymentData.nameOnCard) newErrors.nameOnCard = "Name on card required";
+      }
+      if (paymentData.method === "upi" && !paymentData.upiId) {
+        newErrors.upiId = "UPI ID required";
+      }
+      if (paymentData.method === "netbanking" && !paymentData.bankName) {
+        newErrors.bankName = "Please select a bank";
+      }
     }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (status: "draft" | "published") => {
-    if (!validateForm()) return;
+  const handleNext = () => {
+    if (!validateStep(currentStep)) return;
+    
+    const stepOrder: Step[] = ["details", "services", "payment", "review"];
+    const currentIndex = stepOrder.indexOf(currentStep);
+    if (currentIndex < stepOrder.length - 1) {
+      setCurrentStep(stepOrder[currentIndex + 1]);
+    }
+  };
+
+  const handleBack = () => {
+    const stepOrder: Step[] = ["details", "services", "payment", "review"];
+    const currentIndex = stepOrder.indexOf(currentStep);
+    if (currentIndex > 0) {
+      setCurrentStep(stepOrder[currentIndex - 1]);
+    }
+  };
+
+  const handleSubmit = async (status: "draft" | "published") => {
+    setIsProcessing(true);
+    
+    // Simulate payment processing
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
     const finalEventData = { 
       ...eventData, 
       status,
       id: Date.now().toString(),
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      paymentStatus: eventData.ticketPrice && parseFloat(eventData.ticketPrice) > 0 ? "completed" : "free"
     };
     
     // Store event in localStorage for demo purposes
@@ -60,8 +135,10 @@ const CreateEvent = () => {
     existingEvents.push(finalEventData);
     localStorage.setItem('events', JSON.stringify(existingEvents));
     
+    setIsProcessing(false);
+    
     toast({
-      title: status === "draft" ? "Event Saved as Draft" : "Event Published Successfully!",
+      title: status === "draft" ? "Event Saved as Draft" : "🎉 Event Published Successfully!",
       description: `"${eventData.title}" has been ${status === "draft" ? "saved as draft" : "published and is now live"}.`,
     });
     
@@ -84,334 +161,848 @@ const CreateEvent = () => {
     }));
   };
 
+  const formatCardNumber = (value: string) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    const matches = v.match(/\d{4,16}/g);
+    const match = matches && matches[0] || '';
+    const parts = [];
+    for (let i = 0, len = match.length; i < len; i += 4) {
+      parts.push(match.substring(i, i + 4));
+    }
+    return parts.length ? parts.join(' ') : v;
+  };
+
+  const services = [
+    { id: "catering", label: "Catering & Food", description: "Professional catering services", icon: UtensilsCrossed, color: "from-orange-500 to-amber-500", price: 5000 },
+    { id: "photography", label: "Photography", description: "HD photo & video coverage", icon: Camera, color: "from-purple-500 to-violet-500", price: 8000 },
+    { id: "music", label: "Audio/Music", description: "Sound system & DJ services", icon: Music, color: "from-green-500 to-emerald-500", price: 3000 },
+    { id: "decoration", label: "Decoration", description: "Theme-based decorations", icon: Palette, color: "from-pink-500 to-rose-500", price: 6000 },
+    { id: "transport", label: "Transportation", description: "Guest pickup & drop", icon: Car, color: "from-blue-500 to-cyan-500", price: 4000 },
+    { id: "security", label: "Security", description: "Professional security team", icon: Shield, color: "from-red-500 to-rose-500", price: 7000 }
+  ];
+
+  const calculateServiceTotal = () => {
+    return services
+      .filter(s => eventData.services.includes(s.id))
+      .reduce((sum, s) => sum + s.price, 0);
+  };
+
+  const calculatePlatformFee = () => {
+    const ticketPrice = parseFloat(eventData.ticketPrice) || 0;
+    return Math.round(ticketPrice * 0.05); // 5% platform fee
+  };
+
+  const calculateTotal = () => {
+    const ticketPrice = parseFloat(eventData.ticketPrice) || 0;
+    return ticketPrice + calculateServiceTotal() + calculatePlatformFee();
+  };
+
+  const banks = [
+    "State Bank of India", "HDFC Bank", "ICICI Bank", "Axis Bank", 
+    "Kotak Mahindra Bank", "Punjab National Bank", "Bank of Baroda"
+  ];
+
+  const wallets = ["Paytm", "PhonePe", "Google Pay", "Amazon Pay", "MobiKwik"];
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
       <Header showBackButton={true} />
       
       <div className="flex">
         <Sidebar />
         
-        <main className="flex-1 p-8">
-          <div className="max-w-4xl mx-auto">
+        <main className="flex-1 p-4 md:p-8">
+          <div className="max-w-6xl mx-auto">
             <Breadcrumb />
-            {/* Header */}
-            <div className="flex items-center space-x-4 mb-8">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => navigate(-1)}
-                className="hover:bg-muted"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">Create New Event</h1>
-                <p className="text-muted-foreground">Fill in the details to create your event</p>
+            
+            {/* Premium Header */}
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary via-primary-light to-secondary p-8 mb-8">
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRoLTJ2LTRoMnY0em0wLThoLTJ2LTRoMnY0em0tNiA0aC00djJoNHYtMnptLTYgMGgtNHYyaDR2LTJ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-20"></div>
+              <div className="relative z-10 flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => navigate(-1)}
+                    className="bg-white/10 hover:bg-white/20 text-white"
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                  </Button>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Sparkles className="h-5 w-5 text-accent" />
+                      <span className="text-accent font-medium text-sm">Premium Event Creator</span>
+                    </div>
+                    <h1 className="text-3xl md:text-4xl font-bold text-white">Create Your Event</h1>
+                    <p className="text-white/80 mt-1">Design an unforgettable experience</p>
+                  </div>
+                </div>
+                <div className="hidden md:flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
+                  <Star className="h-4 w-4 text-accent fill-accent" />
+                  <span className="text-white text-sm font-medium">Premium Features Enabled</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Step Progress */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between max-w-3xl mx-auto">
+                {steps.map((step, index) => (
+                  <div key={step.id} className="flex items-center">
+                    <button
+                      onClick={() => {
+                        const stepOrder: Step[] = ["details", "services", "payment", "review"];
+                        const currentIndex = stepOrder.indexOf(currentStep);
+                        const targetIndex = stepOrder.indexOf(step.id);
+                        if (targetIndex <= currentIndex) {
+                          setCurrentStep(step.id);
+                        }
+                      }}
+                      className={`flex flex-col items-center group ${
+                        steps.indexOf(steps.find(s => s.id === currentStep)!) >= index
+                          ? "cursor-pointer"
+                          : "cursor-not-allowed opacity-50"
+                      }`}
+                    >
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
+                        currentStep === step.id
+                          ? "bg-gradient-to-r from-primary to-secondary text-white shadow-lg scale-110"
+                          : steps.indexOf(steps.find(s => s.id === currentStep)!) > index
+                          ? "bg-success text-white"
+                          : "bg-muted text-muted-foreground"
+                      }`}>
+                        {steps.indexOf(steps.find(s => s.id === currentStep)!) > index ? (
+                          <CheckCircle className="h-5 w-5" />
+                        ) : (
+                          <step.icon className="h-5 w-5" />
+                        )}
+                      </div>
+                      <span className={`text-xs mt-2 font-medium ${
+                        currentStep === step.id ? "text-primary" : "text-muted-foreground"
+                      }`}>
+                        {step.label}
+                      </span>
+                    </button>
+                    {index < steps.length - 1 && (
+                      <div className={`w-16 md:w-24 h-1 mx-2 rounded-full transition-colors ${
+                        steps.indexOf(steps.find(s => s.id === currentStep)!) > index
+                          ? "bg-success"
+                          : "bg-muted"
+                      }`} />
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Form */}
+              {/* Main Content */}
               <div className="lg:col-span-2 space-y-6">
-                <Card className="border-0 bg-gradient-to-br from-card to-muted/20">
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Calendar className="h-5 w-5 text-primary" />
-                      <span>Event Details</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-foreground mb-2 block">Event Title *</label>
-                      <Input
-                        value={eventData.title}
-                        onChange={(e) => updateField("title", e.target.value)}
-                        placeholder="Enter event title"
-                        className={errors.title ? "border-destructive" : ""}
-                      />
-                      {errors.title && <p className="text-destructive text-sm mt-1">{errors.title}</p>}
-                    </div>
+                {/* Step 1: Event Details */}
+                {currentStep === "details" && (
+                  <>
+                    <Card className="border-0 shadow-xl bg-gradient-to-br from-card to-muted/10 overflow-hidden">
+                      <div className="h-1 bg-gradient-to-r from-primary via-secondary to-accent" />
+                      <CardHeader className="pb-4">
+                        <CardTitle className="flex items-center gap-3 text-xl">
+                          <div className="p-2 bg-primary/10 rounded-lg">
+                            <Calendar className="h-5 w-5 text-primary" />
+                          </div>
+                          Event Information
+                        </CardTitle>
+                        <CardDescription>Fill in the basic details about your event</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                          <div className="md:col-span-2">
+                            <label className="text-sm font-semibold text-foreground mb-2 block">
+                              Event Title <span className="text-destructive">*</span>
+                            </label>
+                            <Input
+                              value={eventData.title}
+                              onChange={(e) => updateField("title", e.target.value)}
+                              placeholder="Enter an engaging event title"
+                              className={`h-12 text-lg ${errors.title ? "border-destructive ring-destructive" : "focus:ring-primary"}`}
+                            />
+                            {errors.title && <p className="text-destructive text-sm mt-1 flex items-center gap-1"><span>⚠</span>{errors.title}</p>}
+                          </div>
 
-                    <div>
-                      <label className="text-sm font-medium text-foreground mb-2 block">Description</label>
-                      <textarea
-                        value={eventData.description}
-                        onChange={(e) => updateField("description", e.target.value)}
-                        placeholder="Describe your event..."
-                        className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                      />
-                    </div>
+                          <div className="md:col-span-2">
+                            <label className="text-sm font-semibold text-foreground mb-2 block">Description</label>
+                            <textarea
+                              value={eventData.description}
+                              onChange={(e) => updateField("description", e.target.value)}
+                              placeholder="Describe what makes your event special..."
+                              rows={4}
+                              className="flex w-full rounded-xl border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
+                            />
+                          </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium text-foreground mb-2 block">Date *</label>
-                        <Input
-                          type="date"
-                          value={eventData.date}
-                          onChange={(e) => updateField("date", e.target.value)}
-                          className={errors.date ? "border-destructive" : ""}
-                        />
-                        {errors.date && <p className="text-destructive text-sm mt-1">{errors.date}</p>}
+                          <div>
+                            <label className="text-sm font-semibold text-foreground mb-2 block">
+                              Event Type <span className="text-destructive">*</span>
+                            </label>
+                            <select
+                              value={eventData.eventType}
+                              onChange={(e) => updateField("eventType", e.target.value)}
+                              className="flex h-12 w-full rounded-xl border border-input bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                            >
+                              <option value="">Select type</option>
+                              <option value="in-person">🏢 In-Person</option>
+                              <option value="virtual">💻 Virtual</option>
+                              <option value="hybrid">🔄 Hybrid</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="text-sm font-semibold text-foreground mb-2 block">
+                              Category <span className="text-destructive">*</span>
+                            </label>
+                            <select
+                              value={eventData.category}
+                              onChange={(e) => updateField("category", e.target.value)}
+                              className={`flex h-12 w-full rounded-xl border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 ${
+                                errors.category ? "border-destructive" : "border-input focus:ring-ring"
+                              }`}
+                            >
+                              <option value="">Select category</option>
+                              <option value="conference">📊 Conference</option>
+                              <option value="workshop">🛠️ Workshop</option>
+                              <option value="seminar">📚 Seminar</option>
+                              <option value="networking">🤝 Networking</option>
+                              <option value="wedding">💒 Wedding</option>
+                              <option value="corporate">🏢 Corporate</option>
+                              <option value="social">🎉 Social</option>
+                              <option value="other">📋 Other</option>
+                            </select>
+                            {errors.category && <p className="text-destructive text-sm mt-1">{errors.category}</p>}
+                          </div>
+                        </div>
+
+                        <Separator className="my-6" />
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                          <div>
+                            <label className="text-sm font-semibold text-foreground mb-2 block">
+                              Date <span className="text-destructive">*</span>
+                            </label>
+                            <Input
+                              type="date"
+                              value={eventData.date}
+                              onChange={(e) => updateField("date", e.target.value)}
+                              className={`h-12 ${errors.date ? "border-destructive" : ""}`}
+                              min={new Date().toISOString().split('T')[0]}
+                            />
+                            {errors.date && <p className="text-destructive text-sm mt-1">{errors.date}</p>}
+                          </div>
+
+                          <div>
+                            <label className="text-sm font-semibold text-foreground mb-2 block">
+                              Start Time <span className="text-destructive">*</span>
+                            </label>
+                            <Input
+                              type="time"
+                              value={eventData.time}
+                              onChange={(e) => updateField("time", e.target.value)}
+                              className={`h-12 ${errors.time ? "border-destructive" : ""}`}
+                            />
+                            {errors.time && <p className="text-destructive text-sm mt-1">{errors.time}</p>}
+                          </div>
+
+                          <div>
+                            <label className="text-sm font-semibold text-foreground mb-2 block">End Time</label>
+                            <Input
+                              type="time"
+                              value={eventData.endTime}
+                              onChange={(e) => updateField("endTime", e.target.value)}
+                              className="h-12"
+                            />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-0 shadow-xl bg-gradient-to-br from-card to-muted/10 overflow-hidden">
+                      <div className="h-1 bg-gradient-to-r from-secondary via-accent to-success" />
+                      <CardHeader className="pb-4">
+                        <CardTitle className="flex items-center gap-3 text-xl">
+                          <div className="p-2 bg-secondary/10 rounded-lg">
+                            <Building className="h-5 w-5 text-secondary" />
+                          </div>
+                          Venue & Capacity
+                        </CardTitle>
+                        <CardDescription>Where will your event take place?</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                          <div>
+                            <label className="text-sm font-semibold text-foreground mb-2 block">
+                              Venue Name <span className="text-destructive">*</span>
+                            </label>
+                            <Input
+                              value={eventData.venue}
+                              onChange={(e) => updateField("venue", e.target.value)}
+                              placeholder="e.g., Grand Convention Center"
+                              className={`h-12 ${errors.venue ? "border-destructive" : ""}`}
+                            />
+                            {errors.venue && <p className="text-destructive text-sm mt-1">{errors.venue}</p>}
+                          </div>
+
+                          <div>
+                            <label className="text-sm font-semibold text-foreground mb-2 block">
+                              Max Attendees <span className="text-destructive">*</span>
+                            </label>
+                            <div className="relative">
+                              <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                              <Input
+                                type="number"
+                                value={eventData.maxAttendees}
+                                onChange={(e) => updateField("maxAttendees", e.target.value)}
+                                placeholder="100"
+                                min="1"
+                                className={`h-12 pl-10 ${errors.maxAttendees ? "border-destructive" : ""}`}
+                              />
+                            </div>
+                            {errors.maxAttendees && <p className="text-destructive text-sm mt-1">{errors.maxAttendees}</p>}
+                          </div>
+
+                          <div className="md:col-span-2">
+                            <label className="text-sm font-semibold text-foreground mb-2 block">Full Address</label>
+                            <Input
+                              value={eventData.address}
+                              onChange={(e) => updateField("address", e.target.value)}
+                              placeholder="Enter complete address with city and pincode"
+                              className="h-12"
+                            />
+                          </div>
+                        </div>
+
+                        <Separator className="my-6" />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                          <div>
+                            <label className="text-sm font-semibold text-foreground mb-2 block">
+                              <div className="flex items-center gap-2">
+                                <Ticket className="h-4 w-4 text-accent" />
+                                Ticket Price (₹)
+                              </div>
+                            </label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg font-semibold text-muted-foreground">₹</span>
+                              <Input
+                                type="number"
+                                value={eventData.ticketPrice}
+                                onChange={(e) => updateField("ticketPrice", e.target.value)}
+                                placeholder="0 for free event"
+                                min="0"
+                                step="100"
+                                className="h-12 pl-8 text-lg font-medium"
+                              />
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">Leave empty or 0 for free events</p>
+                          </div>
+
+                          <div>
+                            <label className="text-sm font-semibold text-foreground mb-2 block">
+                              <div className="flex items-center gap-2">
+                                <ImageIcon className="h-4 w-4 text-primary" />
+                                Cover Image URL
+                              </div>
+                            </label>
+                            <Input
+                              value={eventData.coverImage}
+                              onChange={(e) => updateField("coverImage", e.target.value)}
+                              placeholder="https://example.com/image.jpg"
+                              className="h-12"
+                            />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </>
+                )}
+
+                {/* Step 2: Services */}
+                {currentStep === "services" && (
+                  <Card className="border-0 shadow-xl bg-gradient-to-br from-card to-muted/10 overflow-hidden">
+                    <div className="h-1 bg-gradient-to-r from-accent via-success to-primary" />
+                    <CardHeader className="pb-4">
+                      <CardTitle className="flex items-center gap-3 text-xl">
+                        <div className="p-2 bg-accent/10 rounded-lg">
+                          <Sparkles className="h-5 w-5 text-accent" />
+                        </div>
+                        Premium Services
+                      </CardTitle>
+                      <CardDescription>Enhance your event with professional services</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {services.map((service) => (
+                          <button
+                            key={service.id}
+                            type="button"
+                            onClick={() => toggleService(service.id)}
+                            className={`relative p-5 rounded-xl border-2 transition-all duration-300 text-left group overflow-hidden ${
+                              eventData.services.includes(service.id)
+                                ? "border-primary bg-primary/5 shadow-lg scale-[1.02]"
+                                : "border-border hover:border-primary/50 hover:shadow-md"
+                            }`}
+                          >
+                            <div className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-br ${service.color} opacity-10 rounded-bl-full transition-opacity group-hover:opacity-20`} />
+                            <div className="relative z-10">
+                              <div className="flex items-start justify-between mb-3">
+                                <div className={`p-2 rounded-lg bg-gradient-to-br ${service.color} text-white`}>
+                                  <service.icon className="h-5 w-5" />
+                                </div>
+                                {eventData.services.includes(service.id) && (
+                                  <CheckCircle className="h-5 w-5 text-success" />
+                                )}
+                              </div>
+                              <h4 className="font-semibold text-foreground mb-1">{service.label}</h4>
+                              <p className="text-sm text-muted-foreground mb-2">{service.description}</p>
+                              <p className="text-lg font-bold text-primary">₹{service.price.toLocaleString('en-IN')}</p>
+                            </div>
+                          </button>
+                        ))}
                       </div>
 
-                      <div>
-                        <label className="text-sm font-medium text-foreground mb-2 block">Time *</label>
-                        <Input
-                          type="time"
-                          value={eventData.time}
-                          onChange={(e) => updateField("time", e.target.value)}
-                          className={errors.time ? "border-destructive" : ""}
-                        />
-                        {errors.time && <p className="text-destructive text-sm mt-1">{errors.time}</p>}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                      {eventData.services.length > 0 && (
+                        <div className="p-4 bg-gradient-to-r from-primary/5 via-secondary/5 to-accent/5 rounded-xl border border-primary/10">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-semibold text-foreground">Selected Services</p>
+                              <p className="text-sm text-muted-foreground">{eventData.services.length} service(s) selected</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm text-muted-foreground">Total</p>
+                              <p className="text-2xl font-bold text-primary">₹{calculateServiceTotal().toLocaleString('en-IN')}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
 
-                <Card className="border-0 bg-gradient-to-br from-card to-muted/20">
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <MapPin className="h-5 w-5 text-secondary" />
-                      <span>Venue & Capacity</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-foreground mb-2 block">Venue *</label>
-                      <Input
-                        value={eventData.venue}
-                        onChange={(e) => updateField("venue", e.target.value)}
-                        placeholder="Event venue or location"
-                        className={errors.venue ? "border-destructive" : ""}
-                      />
-                      {errors.venue && <p className="text-destructive text-sm mt-1">{errors.venue}</p>}
-                    </div>
+                {/* Step 3: Payment */}
+                {currentStep === "payment" && (
+                  <>
+                    {(!eventData.ticketPrice || parseFloat(eventData.ticketPrice) === 0) && calculateServiceTotal() === 0 ? (
+                      <Card className="border-0 shadow-xl bg-gradient-to-br from-success/10 to-card overflow-hidden">
+                        <div className="h-1 bg-gradient-to-r from-success to-primary" />
+                        <CardContent className="py-12 text-center">
+                          <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <CheckCircle className="h-8 w-8 text-success" />
+                          </div>
+                          <h3 className="text-2xl font-bold text-foreground mb-2">Free Event!</h3>
+                          <p className="text-muted-foreground">No payment required for this event. You can proceed to review.</p>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <>
+                        <Card className="border-0 shadow-xl bg-gradient-to-br from-card to-muted/10 overflow-hidden">
+                          <div className="h-1 bg-gradient-to-r from-primary via-secondary to-accent" />
+                          <CardHeader className="pb-4">
+                            <CardTitle className="flex items-center gap-3 text-xl">
+                              <div className="p-2 bg-primary/10 rounded-lg">
+                                <CreditCard className="h-5 w-5 text-primary" />
+                              </div>
+                              Payment Method
+                            </CardTitle>
+                            <CardDescription>Choose your preferred payment method</CardDescription>
+                          </CardHeader>
+                          <CardContent className="space-y-6">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              {[
+                                { id: "card", label: "Card", icon: CreditCard, color: "from-blue-500 to-indigo-500" },
+                                { id: "upi", label: "UPI", icon: Smartphone, color: "from-purple-500 to-pink-500" },
+                                { id: "netbanking", label: "Net Banking", icon: Building, color: "from-green-500 to-teal-500" },
+                                { id: "wallet", label: "Wallet", icon: Wallet, color: "from-orange-500 to-amber-500" }
+                              ].map((method) => (
+                                <button
+                                  key={method.id}
+                                  onClick={() => setPaymentData(prev => ({ ...prev, method: method.id as any }))}
+                                  className={`p-4 rounded-xl border-2 text-center transition-all duration-200 ${
+                                    paymentData.method === method.id
+                                      ? "border-primary bg-primary/10 shadow-lg scale-105"
+                                      : "border-border hover:border-primary/50"
+                                  }`}
+                                >
+                                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${method.color} flex items-center justify-center mx-auto mb-2`}>
+                                    <method.icon className="h-5 w-5 text-white" />
+                                  </div>
+                                  <p className="text-sm font-semibold">{method.label}</p>
+                                </button>
+                              ))}
+                            </div>
+                            {errors.paymentMethod && <p className="text-destructive text-sm">{errors.paymentMethod}</p>}
+                          </CardContent>
+                        </Card>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium text-foreground mb-2 block">Max Attendees *</label>
-                        <Input
-                          type="number"
-                          value={eventData.maxAttendees}
-                          onChange={(e) => updateField("maxAttendees", e.target.value)}
-                          placeholder="100"
-                          min="1"
-                          className={errors.maxAttendees ? "border-destructive" : ""}
-                        />
-                        {errors.maxAttendees && <p className="text-destructive text-sm mt-1">{errors.maxAttendees}</p>}
-                      </div>
+                        {paymentData.method === "card" && (
+                          <Card className="border-0 shadow-xl bg-gradient-to-br from-card to-muted/10 overflow-hidden">
+                            <div className="h-1 bg-gradient-to-r from-blue-500 to-indigo-500" />
+                            <CardHeader>
+                              <CardTitle>Card Details</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-5">
+                              <div>
+                                <label className="text-sm font-semibold mb-2 block">Card Number</label>
+                                <Input
+                                  value={paymentData.cardNumber}
+                                  onChange={(e) => setPaymentData(prev => ({ ...prev, cardNumber: formatCardNumber(e.target.value) }))}
+                                  placeholder="1234 5678 9012 3456"
+                                  maxLength={19}
+                                  className={`h-12 ${errors.cardNumber ? "border-destructive" : ""}`}
+                                />
+                              </div>
+                              <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                  <label className="text-sm font-semibold mb-2 block">Month</label>
+                                  <select
+                                    value={paymentData.expiryMonth}
+                                    onChange={(e) => setPaymentData(prev => ({ ...prev, expiryMonth: e.target.value }))}
+                                    className="flex h-12 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
+                                  >
+                                    <option value="">MM</option>
+                                    {Array.from({ length: 12 }, (_, i) => (
+                                      <option key={i + 1} value={String(i + 1).padStart(2, '0')}>
+                                        {String(i + 1).padStart(2, '0')}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="text-sm font-semibold mb-2 block">Year</label>
+                                  <select
+                                    value={paymentData.expiryYear}
+                                    onChange={(e) => setPaymentData(prev => ({ ...prev, expiryYear: e.target.value }))}
+                                    className="flex h-12 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
+                                  >
+                                    <option value="">YYYY</option>
+                                    {Array.from({ length: 10 }, (_, i) => (
+                                      <option key={i} value={String(new Date().getFullYear() + i)}>
+                                        {new Date().getFullYear() + i}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="text-sm font-semibold mb-2 block">CVV</label>
+                                  <Input
+                                    type="password"
+                                    value={paymentData.cvv}
+                                    onChange={(e) => setPaymentData(prev => ({ ...prev, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) }))}
+                                    placeholder="***"
+                                    maxLength={4}
+                                    className="h-12"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="text-sm font-semibold mb-2 block">Name on Card</label>
+                                <Input
+                                  value={paymentData.nameOnCard}
+                                  onChange={(e) => setPaymentData(prev => ({ ...prev, nameOnCard: e.target.value }))}
+                                  placeholder="Enter name as on card"
+                                  className="h-12"
+                                />
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
 
-                       <div>
-                         <label className="text-sm font-medium text-foreground mb-2 block">Ticket Price (₹)</label>
-                         <div className="relative">
-                           <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">₹</span>
-                           <Input
-                             type="number"
-                             value={eventData.ticketPrice}
-                             onChange={(e) => updateField("ticketPrice", e.target.value)}
-                             placeholder="0.00"
-                             min="0"
-                             step="0.01"
-                             className="pl-8"
-                           />
-                         </div>
-                       </div>
-                    </div>
+                        {paymentData.method === "upi" && (
+                          <Card className="border-0 shadow-xl bg-gradient-to-br from-card to-muted/10 overflow-hidden">
+                            <div className="h-1 bg-gradient-to-r from-purple-500 to-pink-500" />
+                            <CardHeader>
+                              <CardTitle>UPI Payment</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div>
+                                <label className="text-sm font-semibold mb-2 block">UPI ID</label>
+                                <Input
+                                  value={paymentData.upiId}
+                                  onChange={(e) => setPaymentData(prev => ({ ...prev, upiId: e.target.value }))}
+                                  placeholder="yourname@upi"
+                                  className={`h-12 ${errors.upiId ? "border-destructive" : ""}`}
+                                />
+                                {errors.upiId && <p className="text-destructive text-sm mt-1">{errors.upiId}</p>}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
 
-                    <div>
-                      <label className="text-sm font-medium text-foreground mb-2 block">Category</label>
-                      <select
-                        value={eventData.category}
-                        onChange={(e) => updateField("category", e.target.value)}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                      >
-                        <option value="">Select category</option>
-                        <option value="conference">Conference</option>
-                        <option value="workshop">Workshop</option>
-                        <option value="seminar">Seminar</option>
-                        <option value="networking">Networking</option>
-                        <option value="social">Social</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </div>
-                  </CardContent>
-                </Card>
+                        {paymentData.method === "netbanking" && (
+                          <Card className="border-0 shadow-xl bg-gradient-to-br from-card to-muted/10 overflow-hidden">
+                            <div className="h-1 bg-gradient-to-r from-green-500 to-teal-500" />
+                            <CardHeader>
+                              <CardTitle>Select Your Bank</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                {banks.map(bank => (
+                                  <button
+                                    key={bank}
+                                    onClick={() => setPaymentData(prev => ({ ...prev, bankName: bank }))}
+                                    className={`p-3 rounded-lg border text-sm font-medium transition-all ${
+                                      paymentData.bankName === bank
+                                        ? "border-primary bg-primary/10"
+                                        : "border-border hover:border-primary/50"
+                                    }`}
+                                  >
+                                    {bank}
+                                  </button>
+                                ))}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
 
-                <Card className="border-0 bg-gradient-to-br from-card to-muted/20">
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Palette className="h-5 w-5 text-accent" />
-                      <span>Event Services</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Select additional services for your event to enhance the experience
-                    </p>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {[
-                        { id: "catering", label: "Catering & Food", icon: UtensilsCrossed, color: "text-orange-500" },
-                        { id: "photography", label: "Photography", icon: Camera, color: "text-purple-500" },
-                        { id: "music", label: "Audio/Music", icon: Music, color: "text-green-500" },
-                        { id: "decoration", label: "Decoration", icon: Palette, color: "text-pink-500" },
-                        { id: "transport", label: "Transportation", icon: Car, color: "text-blue-500" },
-                        { id: "security", label: "Security", icon: Shield, color: "text-red-500" },
-                      ].map((service) => (
-                        <button
-                          key={service.id}
-                          type="button"
-                          onClick={() => toggleService(service.id)}
-                          className={`p-3 rounded-lg border-2 transition-all duration-200 text-left ${
-                            eventData.services.includes(service.id)
-                              ? "border-primary bg-primary/10 shadow-sm"
-                              : "border-border hover:border-primary/50 hover:bg-accent/50"
-                          }`}
-                        >
-                          <service.icon className={`h-5 w-5 ${service.color} mb-2`} />
-                          <p className="text-sm font-medium text-foreground">{service.label}</p>
-                        </button>
-                      ))}
-                    </div>
-                    
-                    {eventData.services.length > 0 && (
-                      <div className="mt-4 p-3 bg-accent/30 rounded-lg">
-                        <p className="text-sm font-medium text-foreground mb-2">Selected Services:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {eventData.services.map((serviceId) => {
-                            const service = [
-                              { id: "catering", label: "Catering & Food" },
-                              { id: "photography", label: "Photography" },
-                              { id: "music", label: "Audio/Music" },
-                              { id: "decoration", label: "Decoration" },
-                              { id: "transport", label: "Transportation" },
-                              { id: "security", label: "Security" },
-                            ].find(s => s.id === serviceId);
-                            return (
-                              <Badge key={serviceId} variant="secondary" className="text-xs">
-                                {service?.label}
-                              </Badge>
-                            );
-                          })}
+                        {paymentData.method === "wallet" && (
+                          <Card className="border-0 shadow-xl bg-gradient-to-br from-card to-muted/10 overflow-hidden">
+                            <div className="h-1 bg-gradient-to-r from-orange-500 to-amber-500" />
+                            <CardHeader>
+                              <CardTitle>Select Wallet</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                {wallets.map(wallet => (
+                                  <button
+                                    key={wallet}
+                                    onClick={() => setPaymentData(prev => ({ ...prev, walletProvider: wallet }))}
+                                    className={`p-4 rounded-lg border text-sm font-medium transition-all ${
+                                      paymentData.walletProvider === wallet
+                                        ? "border-primary bg-primary/10"
+                                        : "border-border hover:border-primary/50"
+                                    }`}
+                                  >
+                                    {wallet}
+                                  </button>
+                                ))}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
+                      </>
+                    )}
+                  </>
+                )}
+
+                {/* Step 4: Review */}
+                {currentStep === "review" && (
+                  <Card className="border-0 shadow-xl bg-gradient-to-br from-card to-muted/10 overflow-hidden">
+                    <div className="h-1 bg-gradient-to-r from-success via-primary to-secondary" />
+                    <CardHeader className="pb-4">
+                      <CardTitle className="flex items-center gap-3 text-xl">
+                        <div className="p-2 bg-success/10 rounded-lg">
+                          <Eye className="h-5 w-5 text-success" />
+                        </div>
+                        Review Your Event
+                      </CardTitle>
+                      <CardDescription>Confirm all details before publishing</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="space-y-4">
+                        <div className="p-4 bg-muted/30 rounded-xl">
+                          <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                            <Calendar className="h-4 w-4" /> Event Details
+                          </h4>
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div><span className="text-muted-foreground">Title:</span> <span className="font-medium">{eventData.title}</span></div>
+                            <div><span className="text-muted-foreground">Category:</span> <span className="font-medium capitalize">{eventData.category}</span></div>
+                            <div><span className="text-muted-foreground">Date:</span> <span className="font-medium">{eventData.date}</span></div>
+                            <div><span className="text-muted-foreground">Time:</span> <span className="font-medium">{eventData.time}{eventData.endTime && ` - ${eventData.endTime}`}</span></div>
+                            <div><span className="text-muted-foreground">Venue:</span> <span className="font-medium">{eventData.venue}</span></div>
+                            <div><span className="text-muted-foreground">Capacity:</span> <span className="font-medium">{eventData.maxAttendees} attendees</span></div>
+                          </div>
+                        </div>
+
+                        {eventData.services.length > 0 && (
+                          <div className="p-4 bg-muted/30 rounded-xl">
+                            <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                              <Sparkles className="h-4 w-4" /> Selected Services
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                              {eventData.services.map(serviceId => {
+                                const service = services.find(s => s.id === serviceId);
+                                return service && (
+                                  <Badge key={serviceId} variant="secondary" className="py-1 px-3">
+                                    {service.label} - ₹{service.price.toLocaleString('en-IN')}
+                                  </Badge>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="p-4 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl">
+                          <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                            <Banknote className="h-4 w-4" /> Payment Summary
+                          </h4>
+                          <div className="space-y-2 text-sm">
+                            {eventData.ticketPrice && parseFloat(eventData.ticketPrice) > 0 && (
+                              <div className="flex justify-between">
+                                <span>Ticket Price</span>
+                                <span>₹{parseFloat(eventData.ticketPrice).toLocaleString('en-IN')}</span>
+                              </div>
+                            )}
+                            {calculateServiceTotal() > 0 && (
+                              <div className="flex justify-between">
+                                <span>Services</span>
+                                <span>₹{calculateServiceTotal().toLocaleString('en-IN')}</span>
+                              </div>
+                            )}
+                            {calculatePlatformFee() > 0 && (
+                              <div className="flex justify-between text-muted-foreground">
+                                <span>Platform Fee (5%)</span>
+                                <span>₹{calculatePlatformFee().toLocaleString('en-IN')}</span>
+                              </div>
+                            )}
+                            <Separator />
+                            <div className="flex justify-between font-bold text-lg">
+                              <span>Total</span>
+                              <span className="text-primary">₹{calculateTotal().toLocaleString('en-IN')}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Navigation Buttons */}
+                <div className="flex items-center justify-between pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={handleBack}
+                    disabled={currentStep === "details"}
+                    className="gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back
+                  </Button>
+                  
+                  {currentStep !== "review" ? (
+                    <Button
+                      onClick={handleNext}
+                      className="gap-2 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
+                    >
+                      Continue
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <div className="flex gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={() => handleSubmit("draft")}
+                        disabled={isProcessing}
+                        className="gap-2"
+                      >
+                        <Save className="h-4 w-4" />
+                        Save Draft
+                      </Button>
+                      <Button
+                        onClick={() => handleSubmit("published")}
+                        disabled={isProcessing}
+                        className="gap-2 bg-gradient-to-r from-success to-primary hover:from-success/90 hover:to-primary/90"
+                      >
+                        {isProcessing ? (
+                          <>
+                            <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="h-4 w-4" />
+                            Publish Event
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Preview */}
+              {/* Sidebar Preview */}
               <div className="space-y-6">
-                <Card className="border-0 bg-gradient-to-br from-card to-muted/20 sticky top-8">
-                  <CardHeader>
-                    <CardTitle>Event Preview</CardTitle>
+                <Card className="border-0 shadow-xl bg-gradient-to-br from-card to-muted/10 sticky top-8 overflow-hidden">
+                  <div className="h-1 bg-gradient-to-r from-primary via-secondary to-accent" />
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Live Preview</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="h-40 bg-gradient-to-br from-secondary/20 to-accent/20 rounded-lg flex items-center justify-center">
-                      <Calendar className="h-12 w-12 text-secondary/60" />
+                    <div className="aspect-video bg-gradient-to-br from-primary/20 via-secondary/20 to-accent/20 rounded-xl flex items-center justify-center overflow-hidden">
+                      {eventData.coverImage ? (
+                        <img src={eventData.coverImage} alt="Event cover" className="w-full h-full object-cover" />
+                      ) : (
+                        <Calendar className="h-12 w-12 text-primary/40" />
+                      )}
                     </div>
                     
                     <div>
-                      <h3 className="font-semibold text-lg">{eventData.title || "Event Title"}</h3>
-                      <p className="text-muted-foreground text-sm mt-1">
-                        {eventData.description || "Event description will appear here..."}
+                      <h3 className="font-bold text-lg line-clamp-2">{eventData.title || "Your Event Title"}</h3>
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                        {eventData.description || "Event description..."}
                       </p>
                     </div>
 
-                    <div className="space-y-3 text-sm">
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4 text-secondary" />
-                        <span>{eventData.date || "Select date"}</span>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Calendar className="h-4 w-4 text-primary" />
+                        <span>{eventData.date || "Date"} • {eventData.time || "Time"}</span>
                       </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Clock className="h-4 w-4 text-secondary" />
-                        <span>{eventData.time || "Select time"}</span>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center gap-2 text-muted-foreground">
                         <MapPin className="h-4 w-4 text-secondary" />
-                        <span className="truncate">{eventData.venue || "Venue location"}</span>
+                        <span className="truncate">{eventData.venue || "Venue"}</span>
                       </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Users className="h-4 w-4 text-secondary" />
-                        <span>0/{eventData.maxAttendees || "0"} attendees</span>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Users className="h-4 w-4 text-accent" />
+                        <span>0/{eventData.maxAttendees || "0"} seats</span>
                       </div>
-                      
-                       {eventData.ticketPrice && (
-                         <div className="flex items-center space-x-2">
-                           <DollarSign className="h-4 w-4 text-accent" />
-                           <span>₹{eventData.ticketPrice}</span>
-                         </div>
-                       )}
                     </div>
 
-                     {eventData.category && (
-                      <Badge variant="secondary" className="capitalize">
-                        {eventData.category}
-                      </Badge>
+                    {eventData.category && (
+                      <Badge className="capitalize">{eventData.category}</Badge>
                     )}
 
                     {eventData.services.length > 0 && (
-                      <div className="mt-4">
-                        <p className="text-sm font-medium text-foreground mb-2">Services:</p>
-                        <div className="flex flex-wrap gap-1">
-                          {eventData.services.slice(0, 3).map((serviceId) => {
-                            const service = [
-                              { id: "catering", label: "Food" },
-                              { id: "photography", label: "Photo" },
-                              { id: "music", label: "Audio" },
-                              { id: "decoration", label: "Decor" },
-                              { id: "transport", label: "Transport" },
-                              { id: "security", label: "Security" },
-                            ].find(s => s.id === serviceId);
-                            return (
-                              <Badge key={serviceId} variant="outline" className="text-xs">
-                                {service?.label}
-                              </Badge>
-                            );
-                          })}
-                          {eventData.services.length > 3 && (
-                            <Badge variant="outline" className="text-xs">
-                              +{eventData.services.length - 3} more
-                            </Badge>
-                          )}
-                        </div>
+                      <div className="flex flex-wrap gap-1">
+                        {eventData.services.slice(0, 3).map(id => (
+                          <Badge key={id} variant="outline" className="text-xs">
+                            {services.find(s => s.id === id)?.label}
+                          </Badge>
+                        ))}
+                        {eventData.services.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{eventData.services.length - 3}
+                          </Badge>
+                        )}
                       </div>
                     )}
-                   </CardContent>
-                </Card>
 
-                 {/* Action Buttons */}
-                 <div className="space-y-3">
-                   <Button 
-                     onClick={() => {
-                       if (validateForm()) {
-                         // Show confirmation before publishing
-                         const confirmed = window.confirm("Are you sure you want to publish this event? Once published, it will be visible to all users.");
-                         if (confirmed) {
-                           handleSubmit("published");
-                         }
-                       }
-                     }}
-                     className="w-full bg-gradient-to-r from-primary to-primary-light hover:from-primary-light hover:to-primary"
-                     size="lg"
-                   >
-                     <Send className="h-4 w-4 mr-2" />
-                     Confirm & Publish Event
-                   </Button>
-                   
-                   <Button 
-                     onClick={() => handleSubmit("draft")}
-                     variant="outline"
-                     className="w-full"
-                     size="lg"
-                   >
-                     <Save className="h-4 w-4 mr-2" />
-                     Save as Draft
-                   </Button>
-                 </div>
+                    <Separator />
+
+                    <div className="p-3 bg-gradient-to-r from-primary/5 to-secondary/5 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">Total Cost</span>
+                        <span className="text-2xl font-bold text-primary">
+                          {calculateTotal() > 0 ? `₹${calculateTotal().toLocaleString('en-IN')}` : "Free"}
+                        </span>
+                      </div>
+                      {calculateTotal() > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          Includes ticket + services + 5% platform fee
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground justify-center">
+                      <Lock className="h-3 w-3" />
+                      <span>Secure payment with 256-bit encryption</span>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           </div>
