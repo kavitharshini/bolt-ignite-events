@@ -3,7 +3,7 @@ import {
   Calendar, MapPin, Users, Clock, DollarSign, ArrowLeft, Save, Send, 
   Camera, UtensilsCrossed, Music, Palette, Car, Shield, Sparkles, 
   CreditCard, Star, ChevronRight, CheckCircle, Building, Ticket,
-  Banknote, Smartphone, Wallet, Lock, Eye, ImageIcon
+  Banknote, Smartphone, Wallet, Lock, Eye, ImageIcon, PartyPopper
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -15,14 +15,23 @@ import Header from "@/components/Layout/Header";
 import Sidebar from "@/components/Layout/Sidebar";
 import Breadcrumb from "@/components/Layout/Breadcrumb";
 import { Separator } from "@/components/ui/separator";
+import { useEvents, StoredEvent } from "@/hooks/useEvents";
 
 type Step = "details" | "services" | "payment" | "review";
 
 const CreateEvent = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { addEvent } = useEvents();
   
   const [currentStep, setCurrentStep] = useState<Step>("details");
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [transactionDetails, setTransactionDetails] = useState<{
+    transactionId: string;
+    amount: number;
+    method: string;
+    timestamp: string;
+  } | null>(null);
   const [eventData, setEventData] = useState({
     title: "",
     description: "",
@@ -115,31 +124,74 @@ const CreateEvent = () => {
     }
   };
 
+  const generateTransactionId = () => {
+    const prefix = paymentData.method === 'upi' ? 'UPI' : paymentData.method === 'card' ? 'CRD' : paymentData.method === 'netbanking' ? 'NB' : 'WLT';
+    return `${prefix}${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+  };
+
   const handleSubmit = async (status: "draft" | "published") => {
     setIsProcessing(true);
     
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    const totalAmount = calculateTotal();
+    const hasPaidServices = totalAmount > 0;
     
-    const finalEventData = { 
-      ...eventData, 
-      status,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      paymentStatus: eventData.ticketPrice && parseFloat(eventData.ticketPrice) > 0 ? "completed" : "free"
-    };
+    // Simulate realistic payment processing
+    if (hasPaidServices && status === "published") {
+      // Step 1: Validate payment details
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Step 2: Process payment
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      const txnId = generateTransactionId();
+      const txnDetails = {
+        transactionId: txnId,
+        amount: totalAmount,
+        method: paymentData.method === 'card' ? `Card ending ${paymentData.cardNumber.slice(-4)}` :
+                paymentData.method === 'upi' ? `UPI (${paymentData.upiId})` :
+                paymentData.method === 'netbanking' ? paymentData.bankName :
+                paymentData.walletProvider,
+        timestamp: new Date().toISOString()
+      };
+      
+      setTransactionDetails(txnDetails);
+      
+      // Add event with payment details
+      const newEvent = addEvent({
+        ...eventData,
+        status: status as "draft" | "published" | "completed" | "cancelled",
+        paymentStatus: "completed",
+        paymentMethod: txnDetails.method,
+        paymentAmount: txnDetails.amount,
+        transactionId: txnDetails.transactionId
+      });
+      
+      setPaymentSuccess(true);
+      setIsProcessing(false);
+      
+      toast({
+        title: "🎉 Payment Successful!",
+        description: `Transaction ID: ${txnId}`,
+      });
+      
+      return;
+    }
     
-    // Store event in localStorage for demo purposes
-    const existingEvents = JSON.parse(localStorage.getItem('events') || '[]');
-    existingEvents.push(finalEventData);
-    localStorage.setItem('events', JSON.stringify(existingEvents));
+    // For drafts or free events
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    addEvent({
+      ...eventData,
+      status: status as "draft" | "published" | "completed" | "cancelled",
+      paymentStatus: hasPaidServices ? "pending" : "free",
+      paymentAmount: totalAmount
+    });
     
     setIsProcessing(false);
     
     toast({
-      title: status === "draft" ? "Event Saved as Draft" : "🎉 Event Published Successfully!",
-      description: `"${eventData.title}" has been ${status === "draft" ? "saved as draft" : "published and is now live"}.`,
+      title: status === "draft" ? "📝 Event Saved as Draft" : "🎉 Event Published!",
+      description: `"${eventData.title}" has been ${status === "draft" ? "saved as draft" : "published successfully"}.`,
     });
     
     navigate("/events");
@@ -790,7 +842,7 @@ const CreateEvent = () => {
                 )}
 
                 {/* Step 4: Review */}
-                {currentStep === "review" && (
+                {currentStep === "review" && !paymentSuccess && (
                   <Card className="border-0 shadow-xl bg-gradient-to-br from-card to-muted/10 overflow-hidden">
                     <div className="h-1 bg-gradient-to-r from-success via-primary to-secondary" />
                     <CardHeader className="pb-4">
@@ -836,6 +888,31 @@ const CreateEvent = () => {
                           </div>
                         )}
 
+                        {paymentData.method && (
+                          <div className="p-4 bg-muted/30 rounded-xl">
+                            <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                              <CreditCard className="h-4 w-4" /> Payment Method
+                            </h4>
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-primary/10 rounded-lg">
+                                {paymentData.method === 'card' && <CreditCard className="h-5 w-5 text-primary" />}
+                                {paymentData.method === 'upi' && <Smartphone className="h-5 w-5 text-primary" />}
+                                {paymentData.method === 'netbanking' && <Building className="h-5 w-5 text-primary" />}
+                                {paymentData.method === 'wallet' && <Wallet className="h-5 w-5 text-primary" />}
+                              </div>
+                              <div>
+                                <p className="font-medium capitalize">{paymentData.method === 'netbanking' ? 'Net Banking' : paymentData.method}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {paymentData.method === 'card' && `**** **** **** ${paymentData.cardNumber.slice(-4)}`}
+                                  {paymentData.method === 'upi' && paymentData.upiId}
+                                  {paymentData.method === 'netbanking' && paymentData.bankName}
+                                  {paymentData.method === 'wallet' && paymentData.walletProvider}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                         <div className="p-4 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl">
                           <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
                             <Banknote className="h-4 w-4" /> Payment Summary
@@ -871,57 +948,116 @@ const CreateEvent = () => {
                   </Card>
                 )}
 
+                {/* Payment Success Screen */}
+                {paymentSuccess && transactionDetails && (
+                  <Card className="border-0 shadow-xl bg-gradient-to-br from-success/5 to-card overflow-hidden">
+                    <div className="h-2 bg-gradient-to-r from-success via-primary to-secondary" />
+                    <CardContent className="py-12 text-center">
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-32 h-32 bg-success/10 rounded-full animate-ping" />
+                        </div>
+                        <div className="w-24 h-24 bg-gradient-to-br from-success to-primary rounded-full flex items-center justify-center mx-auto mb-6 relative">
+                          <CheckCircle className="h-12 w-12 text-white" />
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <PartyPopper className="h-6 w-6 text-accent" />
+                        <h2 className="text-3xl font-bold text-foreground">Payment Successful!</h2>
+                        <PartyPopper className="h-6 w-6 text-accent" />
+                      </div>
+                      <p className="text-muted-foreground mb-8">Your event has been created and published successfully</p>
+
+                      <div className="max-w-md mx-auto bg-muted/30 rounded-xl p-6 space-y-4 mb-8">
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground">Transaction ID</span>
+                          <span className="font-mono font-bold text-primary">{transactionDetails.transactionId}</span>
+                        </div>
+                        <Separator />
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground">Amount Paid</span>
+                          <span className="text-2xl font-bold text-success">₹{transactionDetails.amount.toLocaleString('en-IN')}</span>
+                        </div>
+                        <Separator />
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground">Payment Method</span>
+                          <span className="font-medium">{transactionDetails.method}</span>
+                        </div>
+                        <Separator />
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground">Date & Time</span>
+                          <span className="text-sm">{new Date(transactionDetails.timestamp).toLocaleString('en-IN')}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-4 justify-center">
+                        <Button variant="outline" onClick={() => navigate("/events")} className="gap-2">
+                          <Eye className="h-4 w-4" />
+                          View All Events
+                        </Button>
+                        <Button onClick={() => navigate("/")} className="gap-2 bg-gradient-to-r from-primary to-secondary">
+                          <Calendar className="h-4 w-4" />
+                          Go to Dashboard
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* Navigation Buttons */}
-                <div className="flex items-center justify-between pt-4">
-                  <Button
-                    variant="outline"
-                    onClick={handleBack}
-                    disabled={currentStep === "details"}
-                    className="gap-2"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    Back
-                  </Button>
-                  
-                  {currentStep !== "review" ? (
+                {!paymentSuccess && (
+                  <div className="flex items-center justify-between pt-4">
                     <Button
-                      onClick={handleNext}
-                      className="gap-2 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
+                      variant="outline"
+                      onClick={handleBack}
+                      disabled={currentStep === "details" || isProcessing}
+                      className="gap-2"
                     >
-                      Continue
-                      <ChevronRight className="h-4 w-4" />
+                      <ArrowLeft className="h-4 w-4" />
+                      Back
                     </Button>
-                  ) : (
-                    <div className="flex gap-3">
+                    
+                    {currentStep !== "review" ? (
                       <Button
-                        variant="outline"
-                        onClick={() => handleSubmit("draft")}
-                        disabled={isProcessing}
-                        className="gap-2"
+                        onClick={handleNext}
+                        className="gap-2 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
                       >
-                        <Save className="h-4 w-4" />
-                        Save Draft
+                        Continue
+                        <ChevronRight className="h-4 w-4" />
                       </Button>
-                      <Button
-                        onClick={() => handleSubmit("published")}
-                        disabled={isProcessing}
-                        className="gap-2 bg-gradient-to-r from-success to-primary hover:from-success/90 hover:to-primary/90"
-                      >
-                        {isProcessing ? (
-                          <>
-                            <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            Processing...
-                          </>
-                        ) : (
-                          <>
-                            <Send className="h-4 w-4" />
-                            Publish Event
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  )}
-                </div>
+                    ) : (
+                      <div className="flex gap-3">
+                        <Button
+                          variant="outline"
+                          onClick={() => handleSubmit("draft")}
+                          disabled={isProcessing}
+                          className="gap-2"
+                        >
+                          <Save className="h-4 w-4" />
+                          Save Draft
+                        </Button>
+                        <Button
+                          onClick={() => handleSubmit("published")}
+                          disabled={isProcessing}
+                          className="gap-2 bg-gradient-to-r from-success to-primary hover:from-success/90 hover:to-primary/90 min-w-[180px]"
+                        >
+                          {isProcessing ? (
+                            <div className="flex items-center gap-2">
+                              <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              <span>Processing Payment...</span>
+                            </div>
+                          ) : (
+                            <>
+                              <Send className="h-4 w-4" />
+                              {calculateTotal() > 0 ? `Pay ₹${calculateTotal().toLocaleString('en-IN')}` : 'Publish Event'}
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Sidebar Preview */}

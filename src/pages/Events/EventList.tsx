@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, Search, Filter, Calendar, Grid, List } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Plus, Search, Filter, Calendar, Grid, List, Sparkles, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,10 +8,16 @@ import Header from "@/components/Layout/Header";
 import Sidebar from "@/components/Layout/Sidebar";
 import Breadcrumb from "@/components/Layout/Breadcrumb";
 import EventCard from "@/components/Dashboard/EventCard";
+import { useEvents } from "@/hooks/useEvents";
+import { useToast } from "@/hooks/use-toast";
+import techConferenceImg from "@/assets/event-tech-conference.jpg";
+import productLaunchImg from "@/assets/event-product-launch.jpg";
+import teamBuildingImg from "@/assets/event-team-building.jpg";
 
-const mockEvents = [
+// Sample events for first-time users
+const sampleEvents = [
   {
-    id: "1",
+    id: "sample_1",
     title: "Annual Tech Conference 2024",
     date: "March 15, 2024",
     time: "9:00 AM - 6:00 PM",
@@ -19,9 +25,10 @@ const mockEvents = [
     attendees: 245,
     maxAttendees: 300,
     status: "published" as const,
+    image: techConferenceImg,
   },
   {
-    id: "2",
+    id: "sample_2",
     title: "Product Launch Gala",
     date: "March 22, 2024",
     time: "7:00 PM - 11:00 PM",
@@ -29,9 +36,10 @@ const mockEvents = [
     attendees: 89,
     maxAttendees: 150,
     status: "draft" as const,
+    image: productLaunchImg,
   },
   {
-    id: "3",
+    id: "sample_3",
     title: "Team Building Workshop",
     date: "April 5, 2024",
     time: "10:00 AM - 4:00 PM",
@@ -39,58 +47,68 @@ const mockEvents = [
     attendees: 42,
     maxAttendees: 50,
     status: "published" as const,
+    image: teamBuildingImg,
   },
-  {
-    id: "4",
-    title: "Marketing Summit 2024",
-    date: "April 12, 2024",
-    time: "8:00 AM - 5:00 PM",
-    venue: "Business Park Auditorium",
-    attendees: 156,
-    maxAttendees: 200,
-    status: "published" as const,
-  },
-  {
-    id: "5",
-    title: "Developer Meetup",
-    date: "April 18, 2024",
-    time: "6:00 PM - 9:00 PM",
-    venue: "Tech Hub Co-working Space",
-    attendees: 78,
-    maxAttendees: 100,
-    status: "completed" as const,
-  },
-  {
-    id: "6",
-    title: "Startup Pitch Night",
-    date: "April 25, 2024",
-    time: "7:00 PM - 10:00 PM",
-    venue: "Innovation Center",
-    attendees: 0,
-    maxAttendees: 120,
-    status: "cancelled" as const,
-  }
 ];
 
 const EventList = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { events, loading, deleteEvent, getEventStats } = useEvents();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  const filteredEvents = mockEvents.filter(event => {
-    const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.venue.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || event.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  // Combine stored events with sample events
+  const allEvents = useMemo(() => {
+    const storedEvents = events.map(e => ({
+      id: e.id,
+      title: e.title,
+      date: e.date ? new Date(e.date).toLocaleDateString('en-IN', { 
+        year: 'numeric', month: 'long', day: 'numeric' 
+      }) : '',
+      time: e.time && e.endTime ? `${e.time} - ${e.endTime}` : e.time || '',
+      venue: e.venue,
+      attendees: e.attendees || 0,
+      maxAttendees: parseInt(e.maxAttendees) || 100,
+      status: e.status,
+      image: e.coverImage || undefined,
+      isStored: true
+    }));
+    
+    // Only show sample events if no real events exist
+    if (storedEvents.length === 0) {
+      return sampleEvents.map(e => ({ ...e, isStored: false }));
+    }
+    
+    return storedEvents;
+  }, [events]);
 
+  const filteredEvents = useMemo(() => {
+    return allEvents.filter(event => {
+      const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           event.venue.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === "all" || event.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [allEvents, searchTerm, statusFilter]);
+
+  const stats = getEventStats();
   const statusCounts = {
-    all: mockEvents.length,
-    published: mockEvents.filter(e => e.status === "published").length,
-    draft: mockEvents.filter(e => e.status === "draft").length,
-    completed: mockEvents.filter(e => e.status === "completed").length,
-    cancelled: mockEvents.filter(e => e.status === "cancelled").length,
+    all: allEvents.length,
+    published: events.length > 0 ? stats.published : sampleEvents.filter(e => e.status === "published").length,
+    draft: events.length > 0 ? stats.draft : sampleEvents.filter(e => e.status === "draft").length,
+    completed: events.length > 0 ? stats.completed : 0,
+    cancelled: events.length > 0 ? stats.cancelled : 0,
+  };
+
+  const handleDeleteEvent = (eventId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    deleteEvent(eventId);
+    toast({
+      title: "Event Deleted",
+      description: "The event has been successfully removed.",
+    });
   };
 
   return (
@@ -169,9 +187,15 @@ const EventList = () => {
             </div>
 
             {/* Events Grid/List */}
-            {filteredEvents.length === 0 ? (
-              <div className="text-center py-12">
-                <Calendar className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="h-80 bg-muted/50 rounded-lg animate-pulse" />
+                ))}
+              </div>
+            ) : filteredEvents.length === 0 ? (
+              <div className="text-center py-12 bg-gradient-to-br from-card to-muted/30 rounded-xl border">
+                <Sparkles className="h-16 w-16 text-primary/40 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-foreground mb-2">No events found</h3>
                 <p className="text-muted-foreground mb-6">
                   {searchTerm || statusFilter !== "all" 
@@ -193,7 +217,7 @@ const EventList = () => {
                   : "space-y-4"
               }>
                 {filteredEvents.map((event) => (
-                  <div key={event.id} onClick={() => navigate(`/events/${event.id}`)}>
+                  <div key={event.id} onClick={() => navigate(`/events/${event.id}`)} className="cursor-pointer">
                     <EventCard event={event} />
                   </div>
                 ))}
@@ -203,7 +227,10 @@ const EventList = () => {
             {/* Results count */}
             {filteredEvents.length > 0 && (
               <div className="mt-8 text-center text-muted-foreground">
-                Showing {filteredEvents.length} of {mockEvents.length} events
+                Showing {filteredEvents.length} of {allEvents.length} events
+                {events.length > 0 && (
+                  <span className="ml-2 text-success">• {events.length} created by you</span>
+                )}
               </div>
             )}
           </div>
