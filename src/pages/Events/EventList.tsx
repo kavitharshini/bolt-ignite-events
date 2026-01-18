@@ -8,7 +8,7 @@ import Header from "@/components/Layout/Header";
 import Sidebar from "@/components/Layout/Sidebar";
 import Breadcrumb from "@/components/Layout/Breadcrumb";
 import EventCard from "@/components/Dashboard/EventCard";
-import { useSupabaseEvents } from "@/hooks/useSupabaseEvents";
+import { useEvents } from "@/hooks/useEvents";
 import { useToast } from "@/hooks/use-toast";
 import techConferenceImg from "@/assets/event-tech-conference.jpg";
 import productLaunchImg from "@/assets/event-product-launch.jpg";
@@ -54,7 +54,7 @@ const sampleEvents = [
 const EventList = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { events, loading, deleteEvent, getEventStats } = useSupabaseEvents();
+  const { events, loading, deleteEvent, getEventStats } = useEvents();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -64,15 +64,15 @@ const EventList = () => {
     const storedEvents = events.map(e => ({
       id: e.id,
       title: e.title,
-      date: e.event_date ? new Date(e.event_date).toLocaleDateString('en-IN', { 
+      date: e.date ? new Date(e.date).toLocaleDateString('en-IN', { 
         year: 'numeric', month: 'long', day: 'numeric' 
       }) : '',
-      time: e.start_time && e.end_time ? `${e.start_time} - ${e.end_time}` : e.start_time || '',
+      time: e.time && e.endTime ? `${e.time} - ${e.endTime}` : e.time || '',
       venue: e.venue,
-      attendees: e.attendee_count || 0,
-      maxAttendees: e.max_attendees || 100,
+      attendees: e.attendees || 0,
+      maxAttendees: parseInt(e.maxAttendees) || 100,
       status: e.status,
-      image: e.cover_image || undefined,
+      image: e.coverImage || undefined,
       isStored: true
     }));
     
@@ -102,15 +102,13 @@ const EventList = () => {
     cancelled: events.length > 0 ? stats.cancelled : 0,
   };
 
-  const handleDeleteEvent = async (eventId: string, e: React.MouseEvent) => {
+  const handleDeleteEvent = (eventId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const { error } = await deleteEvent(eventId);
-    if (!error) {
-      toast({
-        title: "Event Deleted",
-        description: "The event has been successfully removed.",
-      });
-    }
+    deleteEvent(eventId);
+    toast({
+      title: "Event Deleted",
+      description: "The event has been successfully removed.",
+    });
   };
 
   return (

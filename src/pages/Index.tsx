@@ -6,8 +6,8 @@ import EventCard from "@/components/Dashboard/EventCard";
 import BookingCard from "@/components/Dashboard/BookingCard";
 import StatsCard from "@/components/Dashboard/StatsCard";
 import useKeyboardShortcuts from "@/hooks/useKeyboardShortcuts";
-import { useAuth } from "@/hooks/useAuth";
-import { useSupabaseEvents } from "@/hooks/useSupabaseEvents";
+import { useUser } from "@/contexts/UserContext";
+import { useEvents } from "@/hooks/useEvents";
 import { Button } from "@/components/ui/button";
 import techConferenceImg from "@/assets/event-tech-conference.jpg";
 import productLaunchImg from "@/assets/event-product-launch.jpg";
@@ -83,8 +83,8 @@ const mockBookings = [
 const Index = () => {
   const navigate = useNavigate();
   useKeyboardShortcuts();
-  const { profile, isAdmin } = useAuth();
-  const { events, loading, getEventStats } = useSupabaseEvents();
+  const { user } = useUser();
+  const { events, loading, getEventStats } = useEvents();
   
   const stats = getEventStats();
   
@@ -93,13 +93,13 @@ const Index = () => {
     ? events.map(e => ({
         id: e.id,
         title: e.title,
-        date: e.event_date ? new Date(e.event_date).toLocaleDateString() : '',
-        time: e.start_time && e.end_time ? `${e.start_time} - ${e.end_time}` : e.start_time || '',
+        date: e.date ? new Date(e.date).toLocaleDateString() : '',
+        time: e.time && e.endTime ? `${e.time} - ${e.endTime}` : e.time || '',
         venue: e.venue,
-        attendees: e.attendee_count || 0,
-        maxAttendees: e.max_attendees || 100,
+        attendees: e.attendees || 0,
+        maxAttendees: parseInt(e.maxAttendees) || 100,
         status: e.status,
-        image: e.cover_image || undefined
+        image: e.coverImage || undefined
       }))
     : sampleEvents.map(e => ({
         ...e,
@@ -110,7 +110,6 @@ const Index = () => {
 
   const totalEvents = events.length > 0 ? stats.total : sampleEvents.length;
   const totalRevenue = stats.totalRevenue > 0 ? `₹${stats.totalRevenue.toLocaleString('en-IN')}` : '₹45,000';
-  const userName = profile?.full_name || 'User';
   
   return (
     <div className="min-h-screen bg-background">
@@ -122,7 +121,7 @@ const Index = () => {
         <main className="flex-1 p-8">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">
-              Welcome back, {userName}! 👋
+              Welcome back, {user?.name || 'User'}! 👋
             </h1>
             <p className="text-muted-foreground">
               Here's what's happening with your events today.
@@ -141,7 +140,7 @@ const Index = () => {
             />
             <StatsCard
               title="Total Attendees"
-              value={events.length > 0 ? events.reduce((sum, e) => sum + (e.attendee_count || 0), 0).toLocaleString() : "376"}
+              value={events.length > 0 ? events.reduce((sum, e) => sum + (e.attendees || 0), 0).toLocaleString() : "376"}
               change="+18% from last month"
               changeType="positive"
               icon={Users}
@@ -166,7 +165,7 @@ const Index = () => {
           </div>
 
           {/* Recent Bookings */}
-          {!isAdmin && (
+          {!user?.isAdmin && (
             <div className="mb-8">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-semibold text-foreground flex items-center space-x-2">
@@ -194,7 +193,7 @@ const Index = () => {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-2xl font-semibold text-foreground">
-                  {isAdmin ? "Manage Events" : "Your Events"}
+                  {user?.isAdmin ? "Manage Events" : "Your Events"}
                 </h2>
                 {events.length > 0 && (
                   <p className="text-sm text-muted-foreground mt-1">

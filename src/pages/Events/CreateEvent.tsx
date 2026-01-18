@@ -3,8 +3,7 @@ import {
   Calendar, MapPin, Users, Clock, DollarSign, ArrowLeft, Save, Send, 
   Camera, UtensilsCrossed, Music, Palette, Car, Shield, Sparkles, 
   CreditCard, Star, ChevronRight, CheckCircle, Building, Ticket,
-  Banknote, Smartphone, Wallet, Lock, Eye, ImageIcon, PartyPopper,
-  Code, Terminal, FileCode, Laptop
+  Banknote, Smartphone, Wallet, Lock, Eye, ImageIcon, PartyPopper
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -16,16 +15,14 @@ import Header from "@/components/Layout/Header";
 import Sidebar from "@/components/Layout/Sidebar";
 import Breadcrumb from "@/components/Layout/Breadcrumb";
 import { Separator } from "@/components/ui/separator";
-import { useSupabaseEvents } from "@/hooks/useSupabaseEvents";
-import { useAuth } from "@/hooks/useAuth";
+import { useEvents, StoredEvent } from "@/hooks/useEvents";
 
 type Step = "details" | "services" | "payment" | "review";
 
 const CreateEvent = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { addEvent, addPayment } = useSupabaseEvents();
-  const { isAuthenticated, user } = useAuth();
+  const { addEvent } = useEvents();
   
   const [currentStep, setCurrentStep] = useState<Step>("details");
   const [paymentSuccess, setPaymentSuccess] = useState(false);
@@ -133,128 +130,71 @@ const CreateEvent = () => {
   };
 
   const handleSubmit = async (status: "draft" | "published") => {
-    if (!isAuthenticated) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to create an event.",
-        variant: "destructive"
-      });
-      navigate("/auth");
-      return;
-    }
-
     setIsProcessing(true);
     
     const totalAmount = calculateTotal();
     const hasPaidServices = totalAmount > 0;
     
-    try {
-      // Simulate realistic payment processing
-      if (hasPaidServices && status === "published") {
-        // Step 1: Validate payment details
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        // Step 2: Process payment
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        const txnId = generateTransactionId();
-        const txnDetails = {
-          transactionId: txnId,
-          amount: totalAmount,
-          method: paymentData.method === 'card' ? `Card ending ${paymentData.cardNumber.slice(-4)}` :
-                  paymentData.method === 'upi' ? `UPI (${paymentData.upiId})` :
-                  paymentData.method === 'netbanking' ? paymentData.bankName :
-                  paymentData.walletProvider,
-          timestamp: new Date().toISOString()
-        };
-        
-        setTransactionDetails(txnDetails);
-        
-        // Add event to Supabase
-        const { data: newEvent, error: eventError } = await addEvent({
-          title: eventData.title,
-          description: eventData.description || undefined,
-          event_date: eventData.date,
-          start_time: eventData.time || undefined,
-          end_time: eventData.endTime || undefined,
-          venue: eventData.venue,
-          address: eventData.address || undefined,
-          max_attendees: parseInt(eventData.maxAttendees) || 100,
-          ticket_price: parseFloat(eventData.ticketPrice) || 0,
-          category: eventData.category,
-          event_type: eventData.eventType || undefined,
-          status: status,
-          services: eventData.services,
-          cover_image: eventData.coverImage || undefined,
-          tags: eventData.tags,
-        });
-
-        if (eventError) {
-          throw new Error(eventError);
-        }
-
-        // Add payment record
-        if (newEvent) {
-          await addPayment({
-            event_id: newEvent.id,
-            amount: totalAmount,
-            payment_method: txnDetails.method,
-            transaction_id: txnDetails.transactionId
-          });
-        }
-        
-        setPaymentSuccess(true);
-        setIsProcessing(false);
-        
-        toast({
-          title: "🎉 Payment Successful!",
-          description: `Transaction ID: ${txnId}`,
-        });
-        
-        return;
-      }
+    // Simulate realistic payment processing
+    if (hasPaidServices && status === "published") {
+      // Step 1: Validate payment details
+      await new Promise(resolve => setTimeout(resolve, 800));
       
-      // For drafts or free events
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Step 2: Process payment
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      const { error: eventError } = await addEvent({
-        title: eventData.title,
-        description: eventData.description || undefined,
-        event_date: eventData.date,
-        start_time: eventData.time || undefined,
-        end_time: eventData.endTime || undefined,
-        venue: eventData.venue,
-        address: eventData.address || undefined,
-        max_attendees: parseInt(eventData.maxAttendees) || 100,
-        ticket_price: parseFloat(eventData.ticketPrice) || 0,
-        category: eventData.category,
-        event_type: eventData.eventType || undefined,
-        status: status,
-        services: eventData.services,
-        cover_image: eventData.coverImage || undefined,
-        tags: eventData.tags,
+      const txnId = generateTransactionId();
+      const txnDetails = {
+        transactionId: txnId,
+        amount: totalAmount,
+        method: paymentData.method === 'card' ? `Card ending ${paymentData.cardNumber.slice(-4)}` :
+                paymentData.method === 'upi' ? `UPI (${paymentData.upiId})` :
+                paymentData.method === 'netbanking' ? paymentData.bankName :
+                paymentData.walletProvider,
+        timestamp: new Date().toISOString()
+      };
+      
+      setTransactionDetails(txnDetails);
+      
+      // Add event with payment details
+      const newEvent = addEvent({
+        ...eventData,
+        status: status as "draft" | "published" | "completed" | "cancelled",
+        paymentStatus: "completed",
+        paymentMethod: txnDetails.method,
+        paymentAmount: txnDetails.amount,
+        transactionId: txnDetails.transactionId
       });
-
-      if (eventError) {
-        throw new Error(eventError);
-      }
       
+      setPaymentSuccess(true);
       setIsProcessing(false);
       
       toast({
-        title: status === "draft" ? "📝 Event Saved as Draft" : "🎉 Event Published!",
-        description: `"${eventData.title}" has been ${status === "draft" ? "saved as draft" : "published successfully"}.`,
+        title: "🎉 Payment Successful!",
+        description: `Transaction ID: ${txnId}`,
       });
       
-      navigate("/events");
-    } catch (error: any) {
-      setIsProcessing(false);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create event. Please try again.",
-        variant: "destructive"
-      });
+      return;
     }
+    
+    // For drafts or free events
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    addEvent({
+      ...eventData,
+      status: status as "draft" | "published" | "completed" | "cancelled",
+      paymentStatus: hasPaidServices ? "pending" : "free",
+      paymentAmount: totalAmount
+    });
+    
+    setIsProcessing(false);
+    
+    toast({
+      title: status === "draft" ? "📝 Event Saved as Draft" : "🎉 Event Published!",
+      description: `"${eventData.title}" has been ${status === "draft" ? "saved as draft" : "published successfully"}.`,
+    });
+    
+    navigate("/events");
   };
 
   const updateField = (field: string, value: string | string[]) => {
@@ -478,16 +418,13 @@ const CreateEvent = () => {
                               }`}
                             >
                               <option value="">Select category</option>
-                              <option value="python">🐍 Python Workshop</option>
-                              <option value="java">☕ Java Training</option>
-                              <option value="html">🌐 HTML/CSS/Web Dev</option>
-                              <option value="javascript">⚡ JavaScript/React</option>
-                              <option value="database">🗄️ Database & SQL</option>
-                              <option value="devops">🚀 DevOps & Cloud</option>
-                              <option value="ai-ml">🤖 AI/ML Workshop</option>
-                              <option value="hackathon">💻 Hackathon</option>
-                              <option value="conference">📊 Tech Conference</option>
+                              <option value="conference">📊 Conference</option>
+                              <option value="workshop">🛠️ Workshop</option>
+                              <option value="seminar">📚 Seminar</option>
                               <option value="networking">🤝 Networking</option>
+                              <option value="wedding">💒 Wedding</option>
+                              <option value="corporate">🏢 Corporate</option>
+                              <option value="social">🎉 Social</option>
                               <option value="other">📋 Other</option>
                             </select>
                             {errors.category && <p className="text-destructive text-sm mt-1">{errors.category}</p>}
