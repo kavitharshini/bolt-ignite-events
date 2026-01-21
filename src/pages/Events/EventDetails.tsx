@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
-  ArrowLeft, Calendar, MapPin, Users, Clock, DollarSign, 
+  ArrowLeft, Calendar, MapPin, Users, Clock, IndianRupee, 
   Edit, Share2, Download, MoreVertical, CheckCircle, 
   XCircle, User, Mail, Phone
 } from "lucide-react";
@@ -236,9 +236,9 @@ const EventDetails = () => {
                       </div>
                       
                       <div className="flex items-center space-x-3">
-                        <DollarSign className="h-5 w-5 text-accent" />
+                        <IndianRupee className="h-5 w-5 text-accent" />
                         <div>
-                          <div className="font-medium">${event.ticketPrice}</div>
+                          <div className="font-medium">₹{event.ticketPrice.toLocaleString('en-IN')}</div>
                           <div className="text-sm text-muted-foreground">Per ticket</div>
                         </div>
                       </div>
@@ -368,10 +368,10 @@ const EventDetails = () => {
                 <Card className="border-0 bg-gradient-to-br from-card to-muted/20">
                   <CardContent className="p-6">
                     <div className="flex items-center space-x-2 mb-4">
-                      <DollarSign className="h-5 w-5 text-accent" />
+                      <IndianRupee className="h-5 w-5 text-accent" />
                       <span className="font-medium">Revenue</span>
                     </div>
-                    <div className="text-3xl font-bold">${(event.attendees * event.ticketPrice).toLocaleString()}</div>
+                    <div className="text-3xl font-bold">₹{(event.attendees * event.ticketPrice).toLocaleString('en-IN')}</div>
                     <div className="text-sm text-muted-foreground">total collected</div>
                   </CardContent>
                 </Card>
