@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { 
-  Calendar, MapPin, Users, Clock, DollarSign, ArrowLeft, Save, Send, 
+  Calendar, MapPin, Users, ArrowLeft, Save, Send, 
   Camera, UtensilsCrossed, Music, Palette, Car, Shield, Sparkles, 
   CreditCard, Star, ChevronRight, CheckCircle, Building, Ticket,
   Banknote, Smartphone, Wallet, Lock, Eye, ImageIcon, PartyPopper
@@ -70,7 +70,7 @@ const CreateEvent = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   
   // Net Banking flow state
-  type NetBankingStep = "select-bank" | "credentials" | "otp";
+  type NetBankingStep = "select-bank" | "credentials" | "otp" | "verified";
   const [netBankingStep, setNetBankingStep] = useState<NetBankingStep>("select-bank");
   const [isVerifyingCredentials, setIsVerifyingCredentials] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
@@ -110,12 +110,14 @@ const CreateEvent = () => {
       if (paymentData.method === "netbanking") {
         if (!paymentData.bankName) {
           newErrors.bankName = "Please select a bank";
-        } else if (netBankingStep === "select-bank") {
-          newErrors.netBankingFlow = "Please select a bank and complete verification";
-        } else if (netBankingStep === "credentials") {
-          newErrors.netBankingFlow = "Please enter your credentials and verify";
-        } else if (netBankingStep === "otp" && (!paymentData.nbOtp || paymentData.nbOtp.length !== 6)) {
-          newErrors.nbOtp = "Please enter and verify OTP to proceed";
+        } else if (netBankingStep !== "verified") {
+          if (netBankingStep === "select-bank") {
+            newErrors.netBankingFlow = "Please select a bank and complete verification";
+          } else if (netBankingStep === "credentials") {
+            newErrors.netBankingFlow = "Please enter your credentials and verify";
+          } else if (netBankingStep === "otp") {
+            newErrors.nbOtp = "Please verify OTP to proceed";
+          }
         }
       }
     }
@@ -691,7 +693,14 @@ const CreateEvent = () => {
                               ].map((method) => (
                                 <button
                                   key={method.id}
-                                  onClick={() => setPaymentData(prev => ({ ...prev, method: method.id as any }))}
+                                  type="button"
+                                  onClick={() => {
+                                    setPaymentData(prev => ({ ...prev, method: method.id as any }));
+                                    // Reset net banking state when switching payment methods
+                                    if (method.id !== "netbanking") {
+                                      setNetBankingStep("select-bank");
+                                    }
+                                  }}
                                   className={`p-4 rounded-xl border-2 text-center transition-all duration-200 ${
                                     paymentData.method === method.id
                                       ? "border-primary bg-primary/10 shadow-lg scale-105"
@@ -813,18 +822,22 @@ const CreateEvent = () => {
                                     {netBankingStep === "select-bank" && "Select Your Bank"}
                                     {netBankingStep === "credentials" && `Login to ${paymentData.bankName}`}
                                     {netBankingStep === "otp" && "Enter OTP"}
+                                    {netBankingStep === "verified" && "Verification Complete"}
                                   </CardTitle>
                                   <CardDescription className="mt-1">
                                     {netBankingStep === "select-bank" && "Choose your bank to proceed"}
                                     {netBankingStep === "credentials" && "Enter your net banking credentials"}
                                     {netBankingStep === "otp" && "We've sent an OTP to your registered mobile number"}
+                                    {netBankingStep === "verified" && "Your bank account has been verified successfully"}
                                   </CardDescription>
                                 </div>
                                 {netBankingStep !== "select-bank" && (
                                   <div className="flex items-center gap-2">
-                                    <div className={`w-3 h-3 rounded-full ${netBankingStep === "credentials" || netBankingStep === "otp" ? "bg-success" : "bg-muted"}`} />
-                                    <div className={`w-8 h-0.5 ${netBankingStep === "otp" ? "bg-success" : "bg-muted"}`} />
-                                    <div className={`w-3 h-3 rounded-full ${netBankingStep === "otp" ? "bg-success" : "bg-muted"}`} />
+                                    <div className={`w-3 h-3 rounded-full ${netBankingStep === "credentials" || netBankingStep === "otp" || netBankingStep === "verified" ? "bg-success" : "bg-muted"}`} />
+                                    <div className={`w-8 h-0.5 ${netBankingStep === "otp" || netBankingStep === "verified" ? "bg-success" : "bg-muted"}`} />
+                                    <div className={`w-3 h-3 rounded-full ${netBankingStep === "otp" || netBankingStep === "verified" ? "bg-success" : "bg-muted"}`} />
+                                    <div className={`w-8 h-0.5 ${netBankingStep === "verified" ? "bg-success" : "bg-muted"}`} />
+                                    <div className={`w-3 h-3 rounded-full ${netBankingStep === "verified" ? "bg-success" : "bg-muted"}`} />
                                   </div>
                                 )}
                               </div>
@@ -896,6 +909,7 @@ const CreateEvent = () => {
                                   
                                   <div className="flex gap-3">
                                     <Button
+                                      type="button"
                                       variant="outline"
                                       onClick={() => {
                                         setNetBankingStep("select-bank");
@@ -907,6 +921,7 @@ const CreateEvent = () => {
                                       Change Bank
                                     </Button>
                                     <Button
+                                      type="button"
                                       onClick={async () => {
                                         if (!paymentData.nbUsername || !paymentData.nbPassword) {
                                           setErrors({
@@ -950,7 +965,7 @@ const CreateEvent = () => {
                               )}
 
                               {/* Step 3: OTP Verification */}
-                              {netBankingStep === "otp" && (
+                              {(netBankingStep === "otp" || netBankingStep === "verified") && (
                                 <div className="space-y-4">
                                   <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
                                     <Building className="h-8 w-8 text-primary" />
@@ -961,44 +976,60 @@ const CreateEvent = () => {
                                     <CheckCircle className="h-5 w-5 text-success ml-auto" />
                                   </div>
                                   
-                                  <div className="text-center py-4">
-                                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                                      <Smartphone className="h-8 w-8 text-primary" />
+                                  {netBankingStep === "verified" ? (
+                                    <div className="text-center py-4">
+                                      <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <CheckCircle className="h-8 w-8 text-success" />
+                                      </div>
+                                      <h4 className="font-semibold mb-1 text-success">Bank Verified!</h4>
+                                      <p className="text-sm text-muted-foreground">
+                                        Your bank account is ready for payment
+                                      </p>
                                     </div>
-                                    <h4 className="font-semibold mb-1">Enter OTP</h4>
-                                    <p className="text-sm text-muted-foreground">
-                                      OTP sent to ******{Math.floor(Math.random() * 9000 + 1000).toString().slice(-4)}
-                                    </p>
-                                  </div>
+                                  ) : (
+                                    <div className="text-center py-4">
+                                      <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <Smartphone className="h-8 w-8 text-primary" />
+                                      </div>
+                                      <h4 className="font-semibold mb-1">Enter OTP</h4>
+                                      <p className="text-sm text-muted-foreground">
+                                        OTP sent to your registered mobile number
+                                      </p>
+                                    </div>
+                                  )}
                                   
-                                  <div>
-                                    <Input
-                                      value={paymentData.nbOtp}
-                                      onChange={(e) => {
-                                        const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-                                        setPaymentData(prev => ({ ...prev, nbOtp: value }));
-                                        setErrors(prev => ({ ...prev, nbOtp: "" }));
-                                      }}
-                                      placeholder="Enter 6-digit OTP"
-                                      maxLength={6}
-                                      className={`h-14 text-center text-2xl tracking-widest font-mono ${errors.nbOtp ? "border-destructive" : ""}`}
-                                    />
-                                    {errors.nbOtp && <p className="text-destructive text-sm mt-1 text-center">{errors.nbOtp}</p>}
-                                  </div>
-                                  
-                                  <div className="flex gap-3">
+                                  {netBankingStep !== "verified" && (
+                                    <>
+                                      <div>
+                                        <Input
+                                          value={paymentData.nbOtp}
+                                          onChange={(e) => {
+                                            const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                            setPaymentData(prev => ({ ...prev, nbOtp: value }));
+                                            setErrors(prev => ({ ...prev, nbOtp: "" }));
+                                          }}
+                                          placeholder="Enter 6-digit OTP"
+                                          maxLength={6}
+                                          className={`h-14 text-center text-2xl tracking-widest font-mono ${errors.nbOtp ? "border-destructive" : ""}`}
+                                        />
+                                        {errors.nbOtp && <p className="text-destructive text-sm mt-1 text-center">{errors.nbOtp}</p>}
+                                      </div>
+                                      
+                                      <div className="flex gap-3">
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          onClick={() => {
+                                            setNetBankingStep("credentials");
+                                            setPaymentData(prev => ({ ...prev, nbOtp: "" }));
+                                          }}
+                                          className="flex-1"
+                                        >
+                                          <ArrowLeft className="h-4 w-4 mr-2" />
+                                          Back
+                                        </Button>
                                     <Button
-                                      variant="outline"
-                                      onClick={() => {
-                                        setNetBankingStep("credentials");
-                                        setPaymentData(prev => ({ ...prev, nbOtp: "" }));
-                                      }}
-                                      className="flex-1"
-                                    >
-                                      <ArrowLeft className="h-4 w-4 mr-2" />
-                                      Back
-                                    </Button>
-                                    <Button
+                                      type="button"
                                       onClick={async () => {
                                         if (!paymentData.nbOtp || paymentData.nbOtp.length !== 6) {
                                           setErrors({ nbOtp: "Please enter valid 6-digit OTP" });
@@ -1008,6 +1039,7 @@ const CreateEvent = () => {
                                         // Simulate OTP verification
                                         await new Promise(resolve => setTimeout(resolve, 1000));
                                         setIsVerifyingOtp(false);
+                                        setNetBankingStep("verified");
                                         toast({
                                           title: "✓ Bank Verified",
                                           description: "Your bank account has been verified successfully",
@@ -1017,33 +1049,36 @@ const CreateEvent = () => {
                                       disabled={isVerifyingOtp || paymentData.nbOtp.length !== 6}
                                       className="flex-1 bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600"
                                     >
-                                      {isVerifyingOtp ? (
-                                        <>
-                                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                                          Verifying...
-                                        </>
-                                      ) : (
-                                        <>
-                                          <CheckCircle className="h-4 w-4 mr-2" />
-                                          Verify OTP
-                                        </>
-                                      )}
-                                    </Button>
-                                  </div>
-                                  
-                                  <div className="text-center">
-                                    <button 
-                                      className="text-sm text-primary hover:underline"
-                                      onClick={() => {
-                                        toast({
-                                          title: "OTP Resent",
-                                          description: "A new OTP has been sent to your mobile number",
-                                        });
-                                      }}
-                                    >
-                                      Didn't receive OTP? Resend
-                                    </button>
-                                  </div>
+                                        {isVerifyingOtp ? (
+                                          <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                                            Verifying...
+                                          </>
+                                        ) : (
+                                          <>
+                                            <CheckCircle className="h-4 w-4 mr-2" />
+                                            Verify OTP
+                                          </>
+                                        )}
+                                      </Button>
+                                    </div>
+                                    
+                                    <div className="text-center">
+                                      <button 
+                                        type="button"
+                                        className="text-sm text-primary hover:underline"
+                                        onClick={() => {
+                                          toast({
+                                            title: "OTP Resent",
+                                            description: "A new OTP has been sent to your mobile number",
+                                          });
+                                        }}
+                                      >
+                                        Didn't receive OTP? Resend
+                                      </button>
+                                    </div>
+                                  </>
+                                  )}
                                 </div>
                               )}
 
