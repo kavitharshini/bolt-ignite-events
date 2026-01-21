@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { TrendingUp, Users, Calendar, DollarSign, BarChart3, PieChart, Activity } from "lucide-react";
+import { TrendingUp, Users, Calendar, IndianRupee, BarChart3, PieChart, Activity } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import StatsCard from "@/components/Dashboard/StatsCard";
@@ -107,7 +107,7 @@ const AnalyticsDashboard = () => {
                 value={`₹${analyticsData.totalRevenue.toLocaleString('en-IN')}`}
                 change={`+${analyticsData.growthMetrics.revenue}% from last month`}
                 changeType="positive"
-                icon={DollarSign}
+                icon={IndianRupee}
                 gradient="accent"
               />
               
@@ -251,7 +251,7 @@ const AnalyticsDashboard = () => {
               <Card className="border-0 bg-gradient-to-br from-accent/10 to-accent/20 border-accent/20">
                 <CardContent className="p-6">
                   <div className="flex items-center space-x-2 mb-4">
-                    <DollarSign className="h-5 w-5 text-accent" />
+                    <IndianRupee className="h-5 w-5 text-accent" />
                     <span className="font-medium text-accent">Revenue Insight</span>
                   </div>
                   <p className="text-sm text-foreground">

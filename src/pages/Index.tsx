@@ -1,4 +1,4 @@
-import { Calendar, Users, MapPin, TrendingUp, DollarSign, CheckCircle, Ticket, Plus, Sparkles } from "lucide-react";
+import { Calendar, Users, MapPin, TrendingUp, IndianRupee, CheckCircle, Ticket, Plus, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Layout/Header";
 import Sidebar from "@/components/Layout/Sidebar";
@@ -88,28 +88,32 @@ const Index = () => {
   
   const stats = getEventStats();
   
-  // Combine stored events with sample events for display
-  const displayEvents = events.length > 0 
-    ? events.map(e => ({
-        id: e.id,
-        title: e.title,
-        date: e.date ? new Date(e.date).toLocaleDateString() : '',
-        time: e.time && e.endTime ? `${e.time} - ${e.endTime}` : e.time || '',
-        venue: e.venue,
-        attendees: e.attendees || 0,
-        maxAttendees: parseInt(e.maxAttendees) || 100,
-        status: e.status,
-        image: e.coverImage || undefined
-      }))
-    : sampleEvents.map(e => ({
-        ...e,
-        date: new Date(e.date).toLocaleDateString(),
-        time: `${e.time} - ${e.endTime}`,
-        maxAttendees: parseInt(e.maxAttendees)
-      }));
+  // Map stored events
+  const storedEventsDisplay = events.map(e => ({
+    id: e.id,
+    title: e.title,
+    date: e.date ? new Date(e.date).toLocaleDateString() : '',
+    time: e.time && e.endTime ? `${e.time} - ${e.endTime}` : e.time || '',
+    venue: e.venue,
+    attendees: e.attendees || 0,
+    maxAttendees: parseInt(e.maxAttendees) || 100,
+    status: e.status,
+    image: e.coverImage || undefined
+  }));
 
-  const totalEvents = events.length > 0 ? stats.total : sampleEvents.length;
-  const totalRevenue = stats.totalRevenue > 0 ? `₹${stats.totalRevenue.toLocaleString('en-IN')}` : '₹45,000';
+  // Map sample events
+  const sampleEventsDisplay = sampleEvents.map(e => ({
+    ...e,
+    date: new Date(e.date).toLocaleDateString(),
+    time: `${e.time} - ${e.endTime}`,
+    maxAttendees: parseInt(e.maxAttendees)
+  }));
+
+  // Always show both stored and sample events (newly booked + past/upcoming)
+  const displayEvents = [...storedEventsDisplay, ...sampleEventsDisplay];
+
+  const totalEvents = stats.total + sampleEvents.length;
+  const totalRevenue = `₹${(stats.totalRevenue + 45000).toLocaleString('en-IN')}`;
   
   return (
     <div className="min-h-screen bg-background">
@@ -151,7 +155,7 @@ const Index = () => {
               value={totalRevenue}
               change="+8% from last month"
               changeType="positive"
-              icon={DollarSign}
+              icon={IndianRupee}
               gradient="accent"
             />
             <StatsCard
