@@ -59,11 +59,21 @@ const CreateEvent = () => {
     nameOnCard: "",
     upiId: "",
     bankName: "",
-    walletProvider: ""
+    walletProvider: "",
+    // Net Banking fields
+    nbUsername: "",
+    nbPassword: "",
+    nbOtp: ""
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Net Banking flow state
+  type NetBankingStep = "select-bank" | "credentials" | "otp";
+  const [netBankingStep, setNetBankingStep] = useState<NetBankingStep>("select-bank");
+  const [isVerifyingCredentials, setIsVerifyingCredentials] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
 
   const steps: { id: Step; label: string; icon: any }[] = [
     { id: "details", label: "Event Details", icon: Calendar },
@@ -97,8 +107,16 @@ const CreateEvent = () => {
       if (paymentData.method === "upi" && !paymentData.upiId) {
         newErrors.upiId = "UPI ID required";
       }
-      if (paymentData.method === "netbanking" && !paymentData.bankName) {
-        newErrors.bankName = "Please select a bank";
+      if (paymentData.method === "netbanking") {
+        if (!paymentData.bankName) {
+          newErrors.bankName = "Please select a bank";
+        } else if (netBankingStep === "select-bank") {
+          newErrors.netBankingFlow = "Please select a bank and complete verification";
+        } else if (netBankingStep === "credentials") {
+          newErrors.netBankingFlow = "Please enter your credentials and verify";
+        } else if (netBankingStep === "otp" && (!paymentData.nbOtp || paymentData.nbOtp.length !== 6)) {
+          newErrors.nbOtp = "Please enter and verify OTP to proceed";
+        }
       }
     }
     
@@ -789,24 +807,247 @@ const CreateEvent = () => {
                           <Card className="border-0 shadow-xl bg-gradient-to-br from-card to-muted/10 overflow-hidden">
                             <div className="h-1 bg-gradient-to-r from-green-500 to-teal-500" />
                             <CardHeader>
-                              <CardTitle>Select Your Bank</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                {banks.map(bank => (
-                                  <button
-                                    key={bank}
-                                    onClick={() => setPaymentData(prev => ({ ...prev, bankName: bank }))}
-                                    className={`p-3 rounded-lg border text-sm font-medium transition-all ${
-                                      paymentData.bankName === bank
-                                        ? "border-primary bg-primary/10"
-                                        : "border-border hover:border-primary/50"
-                                    }`}
-                                  >
-                                    {bank}
-                                  </button>
-                                ))}
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <CardTitle>
+                                    {netBankingStep === "select-bank" && "Select Your Bank"}
+                                    {netBankingStep === "credentials" && `Login to ${paymentData.bankName}`}
+                                    {netBankingStep === "otp" && "Enter OTP"}
+                                  </CardTitle>
+                                  <CardDescription className="mt-1">
+                                    {netBankingStep === "select-bank" && "Choose your bank to proceed"}
+                                    {netBankingStep === "credentials" && "Enter your net banking credentials"}
+                                    {netBankingStep === "otp" && "We've sent an OTP to your registered mobile number"}
+                                  </CardDescription>
+                                </div>
+                                {netBankingStep !== "select-bank" && (
+                                  <div className="flex items-center gap-2">
+                                    <div className={`w-3 h-3 rounded-full ${netBankingStep === "credentials" || netBankingStep === "otp" ? "bg-success" : "bg-muted"}`} />
+                                    <div className={`w-8 h-0.5 ${netBankingStep === "otp" ? "bg-success" : "bg-muted"}`} />
+                                    <div className={`w-3 h-3 rounded-full ${netBankingStep === "otp" ? "bg-success" : "bg-muted"}`} />
+                                  </div>
+                                )}
                               </div>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                              {/* Step 1: Select Bank */}
+                              {netBankingStep === "select-bank" && (
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                  {banks.map(bank => (
+                                    <button
+                                      key={bank}
+                                      onClick={() => {
+                                        setPaymentData(prev => ({ ...prev, bankName: bank, nbUsername: "", nbPassword: "", nbOtp: "" }));
+                                        setNetBankingStep("credentials");
+                                        setErrors(prev => ({ ...prev, bankName: "" }));
+                                      }}
+                                      className={`p-3 rounded-lg border text-sm font-medium transition-all hover:border-primary hover:bg-primary/5 ${
+                                        paymentData.bankName === bank
+                                          ? "border-primary bg-primary/10"
+                                          : "border-border"
+                                      }`}
+                                    >
+                                      <Building className="h-5 w-5 mx-auto mb-2 text-primary" />
+                                      {bank}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Step 2: Credentials */}
+                              {netBankingStep === "credentials" && (
+                                <div className="space-y-4">
+                                  <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                                    <Building className="h-8 w-8 text-primary" />
+                                    <div>
+                                      <p className="font-semibold">{paymentData.bankName}</p>
+                                      <p className="text-sm text-muted-foreground">Secure Net Banking</p>
+                                    </div>
+                                  </div>
+                                  
+                                  <div>
+                                    <label className="text-sm font-semibold mb-2 block">Username / Customer ID</label>
+                                    <Input
+                                      value={paymentData.nbUsername}
+                                      onChange={(e) => {
+                                        setPaymentData(prev => ({ ...prev, nbUsername: e.target.value }));
+                                        setErrors(prev => ({ ...prev, nbUsername: "" }));
+                                      }}
+                                      placeholder="Enter your username"
+                                      className={`h-12 ${errors.nbUsername ? "border-destructive" : ""}`}
+                                    />
+                                    {errors.nbUsername && <p className="text-destructive text-sm mt-1">{errors.nbUsername}</p>}
+                                  </div>
+                                  
+                                  <div>
+                                    <label className="text-sm font-semibold mb-2 block">Password</label>
+                                    <Input
+                                      type="password"
+                                      value={paymentData.nbPassword}
+                                      onChange={(e) => {
+                                        setPaymentData(prev => ({ ...prev, nbPassword: e.target.value }));
+                                        setErrors(prev => ({ ...prev, nbPassword: "" }));
+                                      }}
+                                      placeholder="Enter your password"
+                                      className={`h-12 ${errors.nbPassword ? "border-destructive" : ""}`}
+                                    />
+                                    {errors.nbPassword && <p className="text-destructive text-sm mt-1">{errors.nbPassword}</p>}
+                                  </div>
+                                  
+                                  <div className="flex gap-3">
+                                    <Button
+                                      variant="outline"
+                                      onClick={() => {
+                                        setNetBankingStep("select-bank");
+                                        setPaymentData(prev => ({ ...prev, bankName: "", nbUsername: "", nbPassword: "" }));
+                                      }}
+                                      className="flex-1"
+                                    >
+                                      <ArrowLeft className="h-4 w-4 mr-2" />
+                                      Change Bank
+                                    </Button>
+                                    <Button
+                                      onClick={async () => {
+                                        if (!paymentData.nbUsername || !paymentData.nbPassword) {
+                                          setErrors({
+                                            nbUsername: !paymentData.nbUsername ? "Username is required" : "",
+                                            nbPassword: !paymentData.nbPassword ? "Password is required" : ""
+                                          });
+                                          return;
+                                        }
+                                        setIsVerifyingCredentials(true);
+                                        // Simulate credential verification
+                                        await new Promise(resolve => setTimeout(resolve, 1500));
+                                        setIsVerifyingCredentials(false);
+                                        setNetBankingStep("otp");
+                                        toast({
+                                          title: "OTP Sent",
+                                          description: "Please check your registered mobile number for OTP",
+                                        });
+                                      }}
+                                      disabled={isVerifyingCredentials}
+                                      className="flex-1 bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600"
+                                    >
+                                      {isVerifyingCredentials ? (
+                                        <>
+                                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                                          Verifying...
+                                        </>
+                                      ) : (
+                                        <>
+                                          Continue
+                                          <ChevronRight className="h-4 w-4 ml-2" />
+                                        </>
+                                      )}
+                                    </Button>
+                                  </div>
+                                  
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Lock className="h-4 w-4" />
+                                    <span>Your credentials are encrypted and secure</span>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Step 3: OTP Verification */}
+                              {netBankingStep === "otp" && (
+                                <div className="space-y-4">
+                                  <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                                    <Building className="h-8 w-8 text-primary" />
+                                    <div>
+                                      <p className="font-semibold">{paymentData.bankName}</p>
+                                      <p className="text-sm text-muted-foreground">Logged in as: {paymentData.nbUsername}</p>
+                                    </div>
+                                    <CheckCircle className="h-5 w-5 text-success ml-auto" />
+                                  </div>
+                                  
+                                  <div className="text-center py-4">
+                                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                      <Smartphone className="h-8 w-8 text-primary" />
+                                    </div>
+                                    <h4 className="font-semibold mb-1">Enter OTP</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                      OTP sent to ******{Math.floor(Math.random() * 9000 + 1000).toString().slice(-4)}
+                                    </p>
+                                  </div>
+                                  
+                                  <div>
+                                    <Input
+                                      value={paymentData.nbOtp}
+                                      onChange={(e) => {
+                                        const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                        setPaymentData(prev => ({ ...prev, nbOtp: value }));
+                                        setErrors(prev => ({ ...prev, nbOtp: "" }));
+                                      }}
+                                      placeholder="Enter 6-digit OTP"
+                                      maxLength={6}
+                                      className={`h-14 text-center text-2xl tracking-widest font-mono ${errors.nbOtp ? "border-destructive" : ""}`}
+                                    />
+                                    {errors.nbOtp && <p className="text-destructive text-sm mt-1 text-center">{errors.nbOtp}</p>}
+                                  </div>
+                                  
+                                  <div className="flex gap-3">
+                                    <Button
+                                      variant="outline"
+                                      onClick={() => {
+                                        setNetBankingStep("credentials");
+                                        setPaymentData(prev => ({ ...prev, nbOtp: "" }));
+                                      }}
+                                      className="flex-1"
+                                    >
+                                      <ArrowLeft className="h-4 w-4 mr-2" />
+                                      Back
+                                    </Button>
+                                    <Button
+                                      onClick={async () => {
+                                        if (!paymentData.nbOtp || paymentData.nbOtp.length !== 6) {
+                                          setErrors({ nbOtp: "Please enter valid 6-digit OTP" });
+                                          return;
+                                        }
+                                        setIsVerifyingOtp(true);
+                                        // Simulate OTP verification
+                                        await new Promise(resolve => setTimeout(resolve, 1000));
+                                        setIsVerifyingOtp(false);
+                                        toast({
+                                          title: "✓ Bank Verified",
+                                          description: "Your bank account has been verified successfully",
+                                        });
+                                        setErrors({});
+                                      }}
+                                      disabled={isVerifyingOtp || paymentData.nbOtp.length !== 6}
+                                      className="flex-1 bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600"
+                                    >
+                                      {isVerifyingOtp ? (
+                                        <>
+                                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                                          Verifying...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <CheckCircle className="h-4 w-4 mr-2" />
+                                          Verify OTP
+                                        </>
+                                      )}
+                                    </Button>
+                                  </div>
+                                  
+                                  <div className="text-center">
+                                    <button 
+                                      className="text-sm text-primary hover:underline"
+                                      onClick={() => {
+                                        toast({
+                                          title: "OTP Resent",
+                                          description: "A new OTP has been sent to your mobile number",
+                                        });
+                                      }}
+                                    >
+                                      Didn't receive OTP? Resend
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+
+                              {errors.bankName && <p className="text-destructive text-sm">{errors.bankName}</p>}
                             </CardContent>
                           </Card>
                         )}
