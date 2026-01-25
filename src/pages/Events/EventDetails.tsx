@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   ArrowLeft, Calendar, MapPin, Users, Clock, IndianRupee, 
@@ -11,50 +11,80 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Layout/Header";
 import Sidebar from "@/components/Layout/Sidebar";
-
-// Mock event data
-const mockEvent = {
-  id: "1",
-  title: "Annual Tech Conference 2024",
-  description: "Join us for the biggest tech conference of the year! Featuring keynote speakers from top tech companies, hands-on workshops, and networking opportunities with industry leaders. Discover the latest trends in AI, cloud computing, and software development.",
-  date: "March 15, 2024",
-  time: "9:00 AM - 6:00 PM",
-  venue: "Grand Convention Center",
-  address: "123 Tech Street, Silicon Valley, CA 94043",
-  attendees: 245,
-  maxAttendees: 300,
-  ticketPrice: 99.99,
-  status: "published" as const,
-  category: "conference",
-  organizer: {
-    name: "Sarah Johnson",
-    email: "sarah@techconf.com",
-    phone: "+1 (555) 123-4567"
-  },
-  agenda: [
-    { time: "9:00 AM", title: "Registration & Coffee", speaker: "" },
-    { time: "10:00 AM", title: "Opening Keynote: Future of AI", speaker: "Dr. Alex Chen" },
-    { time: "11:30 AM", title: "Workshop: Cloud Architecture", speaker: "Maria Rodriguez" },
-    { time: "1:00 PM", title: "Lunch Break", speaker: "" },
-    { time: "2:30 PM", title: "Panel: Startup Ecosystem", speaker: "Various Speakers" },
-    { time: "4:00 PM", title: "Networking Session", speaker: "" },
-    { time: "5:30 PM", title: "Closing Remarks", speaker: "Sarah Johnson" }
-  ],
-  recentAttendees: [
-    { name: "John Doe", email: "john@example.com", registeredAt: "2024-03-01" },
-    { name: "Jane Smith", email: "jane@example.com", registeredAt: "2024-03-02" },
-    { name: "Mike Wilson", email: "mike@example.com", registeredAt: "2024-03-03" },
-    { name: "Lisa Chen", email: "lisa@example.com", registeredAt: "2024-03-04" },
-  ]
-};
+import EventScheduleManager from "@/components/Events/EventScheduleManager";
+import { useEvents } from "@/hooks/useEvents";
+import { format } from "date-fns";
 
 const EventDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
+  const { getEventById } = useEvents();
 
-  const event = mockEvent; // In real app, fetch by id
+  // Get real event data or use fallback mock
+  const storedEvent = id ? getEventById(id) : null;
+  
+  const event = useMemo(() => {
+    if (storedEvent) {
+      return {
+        id: storedEvent.id,
+        title: storedEvent.title,
+        description: storedEvent.description || "No description provided.",
+        date: format(new Date(storedEvent.date), "MMMM d, yyyy"),
+        rawDate: storedEvent.date,
+        time: `${storedEvent.time} - ${storedEvent.endTime}`,
+        startTime: storedEvent.time,
+        endTime: storedEvent.endTime,
+        venue: storedEvent.venue,
+        address: storedEvent.address || "",
+        attendees: storedEvent.attendees,
+        maxAttendees: parseInt(storedEvent.maxAttendees) || 100,
+        ticketPrice: parseFloat(storedEvent.ticketPrice) || 0,
+        status: storedEvent.status,
+        category: storedEvent.category || "other",
+        organizer: {
+          name: "Event Organizer",
+          email: "organizer@example.com",
+          phone: "+91 98765 43210"
+        },
+        recentAttendees: [
+          { name: "John Doe", email: "john@example.com", registeredAt: "2024-03-01" },
+          { name: "Jane Smith", email: "jane@example.com", registeredAt: "2024-03-02" },
+        ]
+      };
+    }
+    
+    // Fallback mock data
+    return {
+      id: "1",
+      title: "Annual Tech Conference 2024",
+      description: "Join us for the biggest tech conference of the year!",
+      date: "March 15, 2024",
+      rawDate: "2024-03-15",
+      time: "9:00 AM - 6:00 PM",
+      startTime: "9:00 AM",
+      endTime: "6:00 PM",
+      venue: "Grand Convention Center",
+      address: "123 Tech Street, Silicon Valley",
+      attendees: 245,
+      maxAttendees: 300,
+      ticketPrice: 99.99,
+      status: "published" as const,
+      category: "conference",
+      organizer: {
+        name: "Sarah Johnson",
+        email: "sarah@techconf.com",
+        phone: "+1 (555) 123-4567"
+      },
+      recentAttendees: [
+        { name: "John Doe", email: "john@example.com", registeredAt: "2024-03-01" },
+        { name: "Jane Smith", email: "jane@example.com", registeredAt: "2024-03-02" },
+        { name: "Mike Wilson", email: "mike@example.com", registeredAt: "2024-03-03" },
+        { name: "Lisa Chen", email: "lisa@example.com", registeredAt: "2024-03-04" },
+      ]
+    };
+  }, [storedEvent]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -75,8 +105,8 @@ const EventDetails = () => {
 
   const tabs = [
     { id: "overview", label: "Overview" },
+    { id: "schedule", label: "Schedule" },
     { id: "attendees", label: "Attendees" },
-    { id: "agenda", label: "Agenda" },
     { id: "analytics", label: "Analytics" }
   ];
 
@@ -325,31 +355,14 @@ const EventDetails = () => {
               </Card>
             )}
 
-            {activeTab === "agenda" && (
-              <Card className="border-0 bg-gradient-to-br from-card to-muted/20">
-                <CardHeader>
-                  <CardTitle>Event Agenda</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {event.agenda.map((item, index) => (
-                      <div key={index} className="flex items-start space-x-4 p-4 bg-muted/50 rounded-lg">
-                        <div className="text-sm font-medium text-secondary min-w-[80px]">
-                          {item.time}
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium">{item.title}</div>
-                          {item.speaker && (
-                            <div className="text-sm text-muted-foreground mt-1">
-                              Speaker: {item.speaker}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+            {activeTab === "schedule" && (
+              <EventScheduleManager
+                category={event.category}
+                eventStartTime={event.startTime}
+                eventEndTime={event.endTime}
+                eventDate={event.date}
+                readOnly={false}
+              />
             )}
 
             {activeTab === "analytics" && (
