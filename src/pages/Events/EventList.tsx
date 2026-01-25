@@ -54,10 +54,30 @@ const sampleEvents = [
 const EventList = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { events, loading, deleteEvent, getEventStats } = useEvents();
+  const { events, loading, deleteEvent, updateEvent, getEventStats } = useEvents();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
+  const handleEditEvent = (id: string) => {
+    navigate(`/events/${id}/edit`);
+  };
+
+  const handleCancelEvent = (id: string) => {
+    updateEvent(id, { status: "cancelled" });
+    toast({
+      title: "Event Cancelled",
+      description: "The event has been cancelled. Attendees will be notified.",
+    });
+  };
+
+  const handleDeleteEvent = (id: string) => {
+    deleteEvent(id);
+    toast({
+      title: "Event Deleted",
+      description: "The event has been permanently removed.",
+    });
+  };
 
   // Combine stored events with sample events
   const allEvents = useMemo(() => {
@@ -102,14 +122,6 @@ const EventList = () => {
     cancelled: events.length > 0 ? stats.cancelled : 0,
   };
 
-  const handleDeleteEvent = (eventId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    deleteEvent(eventId);
-    toast({
-      title: "Event Deleted",
-      description: "The event has been successfully removed.",
-    });
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -211,27 +223,29 @@ const EventList = () => {
                 </Button>
               </div>
             ) : (
-              <div className={
-                viewMode === "grid" 
-                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" 
-                  : "space-y-4"
-              }>
-                {filteredEvents.map((event) => (
-                  <div key={event.id} onClick={() => navigate(`/events/${event.id}`)} className="cursor-pointer">
-                    <EventCard event={event} />
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Results count */}
-            {filteredEvents.length > 0 && (
-              <div className="mt-8 text-center text-muted-foreground">
-                Showing {filteredEvents.length} of {allEvents.length} events
-                {events.length > 0 && (
-                  <span className="ml-2 text-success">• {events.length} created by you</span>
-                )}
-              </div>
+              <>
+                <div className={
+                  viewMode === "grid" 
+                    ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" 
+                    : "space-y-4"
+                }>
+                  {filteredEvents.map((event) => (
+                    <EventCard 
+                      key={event.id} 
+                      event={event}
+                      onEdit={handleEditEvent}
+                      onCancel={handleCancelEvent}
+                      onDelete={handleDeleteEvent}
+                    />
+                  ))}
+                </div>
+                <div className="mt-8 text-center text-muted-foreground">
+                  Showing {filteredEvents.length} of {allEvents.length} events
+                  {events.length > 0 && (
+                    <span className="ml-2 text-success">• {events.length} created by you</span>
+                  )}
+                </div>
+              </>
             )}
           </div>
         </main>

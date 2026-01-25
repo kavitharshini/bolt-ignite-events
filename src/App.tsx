@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import CreateEvent from "./pages/Events/CreateEvent";
+import EditEvent from "./pages/Events/EditEvent";
 import EventList from "./pages/Events/EventList";
 import EventDetails from "./pages/Events/EventDetails";
 import CalendarView from "./pages/Calendar/CalendarView";
@@ -47,6 +48,11 @@ const App = () => (
             <Route path="/events/:id" element={
               <RoleBasedRoute>
                 <EventDetails />
+              </RoleBasedRoute>
+            } />
+            <Route path="/events/:id/edit" element={
+              <RoleBasedRoute>
+                <EditEvent />
               </RoleBasedRoute>
             } />
             <Route path="/calendar" element={
