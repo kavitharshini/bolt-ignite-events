@@ -8,6 +8,7 @@ import StatsCard from "@/components/Dashboard/StatsCard";
 import useKeyboardShortcuts from "@/hooks/useKeyboardShortcuts";
 import { useUser } from "@/contexts/UserContext";
 import { useEvents } from "@/hooks/useEvents";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import techConferenceImg from "@/assets/event-tech-conference.jpg";
 import productLaunchImg from "@/assets/event-product-launch.jpg";
@@ -84,9 +85,30 @@ const Index = () => {
   const navigate = useNavigate();
   useKeyboardShortcuts();
   const { user } = useUser();
-  const { events, loading, getEventStats } = useEvents();
+  const { toast } = useToast();
+  const { events, loading, getEventStats, updateEvent, deleteEvent } = useEvents();
   
   const stats = getEventStats();
+
+  const handleEditEvent = (id: string) => {
+    navigate(`/events/${id}/edit`);
+  };
+
+  const handleCancelEvent = (id: string) => {
+    updateEvent(id, { status: "cancelled" });
+    toast({
+      title: "Event Cancelled",
+      description: "The event has been cancelled. Attendees will be notified.",
+    });
+  };
+
+  const handleDeleteEvent = (id: string) => {
+    deleteEvent(id);
+    toast({
+      title: "Event Deleted",
+      description: "The event has been permanently removed.",
+    });
+  };
   
   // Map stored events
   const storedEventsDisplay = events.map(e => ({
@@ -245,9 +267,13 @@ const Index = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {displayEvents.slice(0, 3).map((event) => (
-                  <div key={event.id} onClick={() => navigate(`/events/${event.id}`)} className="cursor-pointer">
-                    <EventCard event={event} />
-                  </div>
+                  <EventCard 
+                    key={event.id} 
+                    event={event}
+                    onEdit={handleEditEvent}
+                    onCancel={handleCancelEvent}
+                    onDelete={handleDeleteEvent}
+                  />
                 ))}
               </div>
             )}
