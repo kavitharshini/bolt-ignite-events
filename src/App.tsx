@@ -15,8 +15,9 @@ import AttendeesPage from "./pages/Attendees/AttendeesPage";
 import SettingsPage from "./pages/Settings/SettingsPage";
 import ProfilePage from "./pages/Profile/ProfilePage";
 import BookingsPage from "./pages/Bookings/BookingsPage";
-import LoginPage from "./components/Auth/LoginPage";
+import AuthPage from "./pages/Auth/AuthPage";
 import RoleBasedRoute from "./components/Auth/RoleBasedRoute";
+import { AuthProvider } from "./contexts/AuthContext";
 import { UserProvider } from "./contexts/UserContext";
 
 const queryClient = new QueryClient();
@@ -27,68 +28,72 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <UserProvider>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/" element={
-              <RoleBasedRoute>
-                <Index />
-              </RoleBasedRoute>
-            } />
-            <Route path="/events" element={
-              <RoleBasedRoute>
-                <EventList />
-              </RoleBasedRoute>
-            } />
-            <Route path="/events/create" element={
-              <RoleBasedRoute>
-                <CreateEvent />
-              </RoleBasedRoute>
-            } />
-            <Route path="/events/:id" element={
-              <RoleBasedRoute>
-                <EventDetails />
-              </RoleBasedRoute>
-            } />
-            <Route path="/events/:id/edit" element={
-              <RoleBasedRoute>
-                <EditEvent />
-              </RoleBasedRoute>
-            } />
-            <Route path="/calendar" element={
-              <RoleBasedRoute adminOnly>
-                <CalendarView />
-              </RoleBasedRoute>
-            } />
-            <Route path="/analytics" element={
-              <RoleBasedRoute adminOnly>
-                <AnalyticsDashboard />
-              </RoleBasedRoute>
-            } />
-            <Route path="/attendees" element={
-              <RoleBasedRoute adminOnly>
-                <AttendeesPage />
-              </RoleBasedRoute>
-            } />
-            <Route path="/bookings" element={
-              <RoleBasedRoute userOnly>
-                <BookingsPage />
-              </RoleBasedRoute>
-            } />
-            <Route path="/profile" element={
-              <RoleBasedRoute>
-                <ProfilePage />
-              </RoleBasedRoute>
-            } />
-            <Route path="/settings" element={
-              <RoleBasedRoute>
-                <SettingsPage />
-              </RoleBasedRoute>
-            } />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </UserProvider>
+        <AuthProvider>
+          <UserProvider>
+            <Routes>
+              <Route path="/auth" element={<AuthPage />} />
+              {/* Legacy route redirect */}
+              <Route path="/login" element={<AuthPage />} />
+              <Route path="/" element={
+                <RoleBasedRoute>
+                  <Index />
+                </RoleBasedRoute>
+              } />
+              <Route path="/events" element={
+                <RoleBasedRoute>
+                  <EventList />
+                </RoleBasedRoute>
+              } />
+              <Route path="/events/create" element={
+                <RoleBasedRoute>
+                  <CreateEvent />
+                </RoleBasedRoute>
+              } />
+              <Route path="/events/:id" element={
+                <RoleBasedRoute>
+                  <EventDetails />
+                </RoleBasedRoute>
+              } />
+              <Route path="/events/:id/edit" element={
+                <RoleBasedRoute>
+                  <EditEvent />
+                </RoleBasedRoute>
+              } />
+              <Route path="/calendar" element={
+                <RoleBasedRoute adminOnly>
+                  <CalendarView />
+                </RoleBasedRoute>
+              } />
+              <Route path="/analytics" element={
+                <RoleBasedRoute adminOnly>
+                  <AnalyticsDashboard />
+                </RoleBasedRoute>
+              } />
+              <Route path="/attendees" element={
+                <RoleBasedRoute adminOnly>
+                  <AttendeesPage />
+                </RoleBasedRoute>
+              } />
+              <Route path="/bookings" element={
+                <RoleBasedRoute userOnly>
+                  <BookingsPage />
+                </RoleBasedRoute>
+              } />
+              <Route path="/profile" element={
+                <RoleBasedRoute>
+                  <ProfilePage />
+                </RoleBasedRoute>
+              } />
+              <Route path="/settings" element={
+                <RoleBasedRoute>
+                  <SettingsPage />
+                </RoleBasedRoute>
+              } />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </UserProvider>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

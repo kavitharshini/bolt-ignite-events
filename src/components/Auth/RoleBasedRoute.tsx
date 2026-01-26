@@ -1,12 +1,12 @@
 import { ReactNode } from 'react';
-import { useUser } from '@/contexts/UserContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Lock, AlertTriangle } from 'lucide-react';
+import { Lock, AlertTriangle, Loader2 } from 'lucide-react';
 
 interface RoleBasedRouteProps {
   children: ReactNode;
-  allowedRoles?: ('admin' | 'user')[];
+  allowedRoles?: ('admin' | 'moderator' | 'user')[];
   adminOnly?: boolean;
   userOnly?: boolean;
 }
@@ -17,26 +17,37 @@ const RoleBasedRoute = ({
   adminOnly = false,
   userOnly = false 
 }: RoleBasedRouteProps) => {
-  const { user, isLoggedIn } = useUser();
+  const { user, isLoading, isAdmin, userRole } = useAuth();
 
-  // Redirect to login if not authenticated
-  if (!isLoggedIn || !user) {
-    return <Navigate to="/login" replace />;
+  // Show loading state while checking auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <span className="text-muted-foreground">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect to auth if not authenticated
+  if (!user) {
+    return <Navigate to="/auth" replace />;
   }
 
   // Determine access
   let hasAccess = true;
 
-  if (adminOnly && !user.isAdmin) {
+  if (adminOnly && !isAdmin) {
     hasAccess = false;
   }
 
-  if (userOnly && user.isAdmin) {
+  if (userOnly && isAdmin) {
     hasAccess = false;
   }
 
-  if (allowedRoles) {
-    const userRole = user.isAdmin ? 'admin' : 'user';
+  if (allowedRoles && userRole) {
     hasAccess = allowedRoles.includes(userRole);
   }
 
@@ -56,7 +67,7 @@ const RoleBasedRoute = ({
               <p>You don't have permission to access this page.</p>
             </div>
             <p className="text-sm text-muted-foreground">
-              {user.isAdmin ? 
+              {isAdmin ? 
                 "This section is for regular users only." :
                 "This section requires administrator privileges."
               }
