@@ -1,12 +1,12 @@
 import { Home, Calendar, CalendarDays, Users, BarChart3, Settings, Plus, User, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useUser } from "@/contexts/UserContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useUser();
+  const { isAdmin } = useAuth();
   
   // Different menu items based on user role
   const adminMenuItems = [
@@ -26,7 +26,7 @@ const Sidebar = () => {
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
 
-  const menuItems = user?.isAdmin ? adminMenuItems : userMenuItems;
+  const menuItems = isAdmin ? adminMenuItems : userMenuItems;
 
   const isActive = (path: string) => {
     if (path === "/") return location.pathname === "/";
@@ -65,7 +65,7 @@ const Sidebar = () => {
         </ul>
       </nav>
       
-      {!user?.isAdmin && (
+      {!isAdmin && (
         <div className="p-4 border-t border-border mt-auto">
           <div className="bg-gradient-to-br from-secondary/10 to-accent/10 rounded-lg p-4 border border-secondary/20">
             <h3 className="text-sm font-semibold text-foreground mb-1">Upgrade to Pro</h3>
