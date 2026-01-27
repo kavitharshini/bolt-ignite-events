@@ -9,18 +9,22 @@ import { useNavigate } from "react-router-dom";
 import emsLogo from "@/assets/ems-logo-new.png";
 import NotificationPanel from "@/components/Notifications/NotificationPanel";
 import SearchCommand from "./SearchCommand";
-import { useUser } from "@/contexts/UserContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Header = ({ showBackButton = false }: { showBackButton?: boolean }) => {
   const navigate = useNavigate();
-  const { user, isLoggedIn, logout } = useUser();
+  const { user, isAdmin, signOut } = useAuth();
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/auth');
   };
+
+  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+  const userEmail = user?.email || '';
+  const userInitials = userName.split(' ').map((n: string) => n[0]).join('').toUpperCase();
 
   return (
     <header className="bg-card border-b border-border px-6 py-4">
@@ -90,21 +94,21 @@ const Header = ({ showBackButton = false }: { showBackButton?: boolean }) => {
             </PopoverContent>
           </Popover>
           
-          {isLoggedIn && user ? (
+          {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 px-3">
                   <Avatar className="h-8 w-8 mr-2">
-                    <AvatarImage src={user.avatar || "/placeholder-avatar.jpg"} alt={user.name} />
+                    <AvatarImage src="/placeholder-avatar.jpg" alt={userName} />
                     <AvatarFallback className="bg-primary text-primary-foreground">
-                      {user.name.split(' ').map(n => n[0]).join('')}
+                      {userInitials}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col items-start">
-                    <span className="text-sm font-medium">{user.name}</span>
-                    <span className="text-xs text-muted-foreground">{user.email}</span>
+                    <span className="text-sm font-medium">{userName}</span>
+                    <span className="text-xs text-muted-foreground">{userEmail}</span>
                   </div>
-                  {user.isAdmin && (
+                  {isAdmin && (
                     <Badge variant="secondary" className="ml-2 text-xs">Admin</Badge>
                   )}
                 </Button>
@@ -112,9 +116,9 @@ const Header = ({ showBackButton = false }: { showBackButton?: boolean }) => {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.name}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                    {user.isAdmin && (
+                    <p className="text-sm font-medium leading-none">{userName}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{userEmail}</p>
+                    {isAdmin && (
                       <Badge variant="outline" className="w-fit mt-1">Administrator</Badge>
                     )}
                   </div>
@@ -139,7 +143,7 @@ const Header = ({ showBackButton = false }: { showBackButton?: boolean }) => {
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
-                onClick={() => navigate("/login")}
+                onClick={() => navigate("/auth")}
                 className="h-10"
               >
                 <User className="h-4 w-4 mr-2" />
