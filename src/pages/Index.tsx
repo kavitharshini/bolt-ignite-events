@@ -6,7 +6,7 @@ import EventCard from "@/components/Dashboard/EventCard";
 import BookingCard from "@/components/Dashboard/BookingCard";
 import StatsCard from "@/components/Dashboard/StatsCard";
 import useKeyboardShortcuts from "@/hooks/useKeyboardShortcuts";
-import { useAuth } from "@/contexts/AuthContext";
+import { useUser } from "@/contexts/UserContext";
 import { useEvents } from "@/hooks/useEvents";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -84,12 +84,11 @@ const mockBookings = [
 const Index = () => {
   const navigate = useNavigate();
   useKeyboardShortcuts();
-  const { user, isAdmin } = useAuth();
+  const { user } = useUser();
   const { toast } = useToast();
   const { events, loading, getEventStats, updateEvent, deleteEvent } = useEvents();
   
   const stats = getEventStats();
-  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
 
   const handleEditEvent = (id: string) => {
     navigate(`/events/${id}/edit`);
@@ -148,7 +147,7 @@ const Index = () => {
         <main className="flex-1 p-8">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">
-              Welcome back, {userName}! 👋
+              Welcome back, {user?.name || 'User'}! 👋
             </h1>
             <p className="text-muted-foreground">
               Here's what's happening with your events today.
@@ -192,7 +191,7 @@ const Index = () => {
           </div>
 
           {/* Recent Bookings */}
-          {!isAdmin && (
+          {!user?.isAdmin && (
             <div className="mb-8">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-semibold text-foreground flex items-center space-x-2">
@@ -220,7 +219,7 @@ const Index = () => {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-2xl font-semibold text-foreground">
-                  {isAdmin ? "Manage Events" : "Your Events"}
+                  {user?.isAdmin ? "Manage Events" : "Your Events"}
                 </h2>
                 {events.length > 0 && (
                   <p className="text-sm text-muted-foreground mt-1">

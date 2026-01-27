@@ -1,56 +1,37 @@
 import { useState, useEffect } from "react";
-import { Settings, User, Bell, Shield, Globe, Moon, Sun, Save } from "lucide-react";
+import { Settings, User, Bell, Shield, CreditCard, Globe, Moon, Sun, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useUser } from "@/contexts/UserContext";
 import Header from "@/components/Layout/Header";
 import Sidebar from "@/components/Layout/Sidebar";
 
 const SettingsPage = () => {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, updateUser } = useUser();
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
-  const userEmail = user?.email || '';
   
   const [profileData, setProfileData] = useState({
-    name: userName,
-    email: userEmail,
-    phone: "",
-    organization: ""
+    name: user?.name || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
+    organization: user?.company || ""
   });
 
-  // Fetch profile data from Supabase
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user) return;
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-      
-      if (data && !error) {
-        setProfileData(prev => ({
-          ...prev,
-          name: data.full_name || userName,
-          email: data.email || userEmail,
-          phone: data.phone || "",
-          organization: data.company || "",
-        }));
-      }
-    };
-    
-    fetchProfile();
-  }, [user, userName, userEmail]);
+    if (user) {
+      setProfileData({
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        organization: user.company
+      });
+    }
+  }, [user]);
 
   const [notificationSettings, setNotificationSettings] = useState({
     emailNotifications: true,
@@ -66,32 +47,15 @@ const SettingsPage = () => {
     passwordExpiry: "90"
   });
 
-  const handleSaveProfile = async () => {
-    if (!user) return;
-    
-    setIsLoading(true);
-    
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({
-        user_id: user.id,
-        full_name: profileData.name,
+  const handleSaveProfile = () => {
+    if (user) {
+      updateUser({
+        name: profileData.name,
         email: profileData.email,
         phone: profileData.phone,
-        company: profileData.organization,
+        company: profileData.organization
       });
-    
-    setIsLoading(false);
-    
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update profile. Please try again.",
-        variant: "destructive",
-      });
-      return;
     }
-    
     toast({
       title: "Profile Updated",
       description: "Your profile information has been saved successfully.",
@@ -172,13 +136,9 @@ const SettingsPage = () => {
                       />
                     </div>
                   </div>
-                  <Button 
-                    onClick={handleSaveProfile} 
-                    className="bg-gradient-to-r from-primary to-primary-light"
-                    disabled={isLoading}
-                  >
+                  <Button onClick={handleSaveProfile} className="bg-gradient-to-r from-primary to-primary-light">
                     <Save className="h-4 w-4 mr-2" />
-                    {isLoading ? "Saving..." : "Save Profile"}
+                    Save Profile
                   </Button>
                 </CardContent>
               </Card>

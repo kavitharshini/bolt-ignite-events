@@ -8,57 +8,39 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, User, Camera } from "lucide-react";
+import { Calendar, MapPin, Mail, Phone, User, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useUser } from "@/contexts/UserContext";
 
 const ProfilePage = () => {
   const { toast } = useToast();
-  const { user, isAdmin } = useAuth();
+  const { user, updateUser } = useUser();
   const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
-  const userEmail = user?.email || '';
-  
   const [profileData, setProfileData] = useState({
-    name: userName,
-    email: userEmail,
-    phone: "",
-    bio: "",
-    location: "",
-    company: "",
-    role: isAdmin ? "Administrator" : "Event Manager",
-    joinDate: user?.created_at ? new Date(user.created_at).toLocaleDateString() : "",
+    name: user?.name || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
+    bio: user?.bio || "",
+    location: user?.location || "",
+    company: user?.company || "",
+    role: user?.role || "",
+    joinDate: user?.joinDate || "",
   });
 
-  // Fetch profile data from Supabase
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user) return;
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-      
-      if (data && !error) {
-        setProfileData(prev => ({
-          ...prev,
-          name: data.full_name || userName,
-          email: data.email || userEmail,
-          phone: data.phone || "",
-          bio: data.bio || "",
-          location: data.location || "",
-          company: data.company || "",
-        }));
-      }
-    };
-    
-    fetchProfile();
-  }, [user, userName, userEmail]);
+    if (user) {
+      setProfileData({
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        bio: user.bio,
+        location: user.location,
+        company: user.company,
+        role: user.role,
+        joinDate: user.joinDate,
+      });
+    }
+  }, [user]);
 
   const [eventsCreated] = useState([
     {
@@ -84,33 +66,17 @@ const ProfilePage = () => {
     },
   ]);
 
-  const handleSave = async () => {
-    if (!user) return;
-    
-    setIsLoading(true);
-    
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({
-        user_id: user.id,
-        full_name: profileData.name,
-        email: profileData.email,
-        phone: profileData.phone,
-        bio: profileData.bio,
-        location: profileData.location,
-        company: profileData.company,
-      });
-    
-    setIsLoading(false);
-    
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update profile. Please try again.",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleSave = () => {
+    // Update the user context with new data
+    updateUser({
+      name: profileData.name,
+      email: profileData.email,
+      phone: profileData.phone,
+      bio: profileData.bio,
+      location: profileData.location,
+      company: profileData.company,
+      role: profileData.role,
+    });
     
     setIsEditing(false);
     toast({
@@ -125,8 +91,6 @@ const ProfilePage = () => {
       description: "Profile image upload feature will be available soon.",
     });
   };
-
-  const userInitials = profileData.name.split(' ').map(n => n[0]).join('').toUpperCase();
 
   return (
     <div className="min-h-screen bg-background">
@@ -144,9 +108,8 @@ const ProfilePage = () => {
               <Button
                 onClick={() => isEditing ? handleSave() : setIsEditing(true)}
                 variant={isEditing ? "default" : "outline"}
-                disabled={isLoading}
               >
-                {isLoading ? "Saving..." : isEditing ? "Save Changes" : "Edit Profile"}
+                {isEditing ? "Save Changes" : "Edit Profile"}
               </Button>
             </div>
 
@@ -162,8 +125,8 @@ const ProfilePage = () => {
                   <div className="relative">
                     <Avatar className="h-24 w-24">
                       <AvatarImage src="/placeholder-avatar.jpg" />
-                      <AvatarFallback className="text-lg font-semibold bg-primary text-primary-foreground">
-                        {userInitials}
+                      <AvatarFallback className="text-lg font-semibold">
+                        {profileData.name.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
                     <Button
@@ -248,7 +211,8 @@ const ProfilePage = () => {
                     <Input
                       id="role"
                       value={profileData.role}
-                      disabled
+                      onChange={(e) => setProfileData({...profileData, role: e.target.value})}
+                      disabled={!isEditing}
                     />
                   </div>
                 </div>
@@ -263,9 +227,6 @@ const ProfilePage = () => {
                     <User className="h-4 w-4" />
                     <span className="text-sm">{eventsCreated.length} Events Created</span>
                   </div>
-                  {isAdmin && (
-                    <Badge variant="secondary">Administrator</Badge>
-                  )}
                 </div>
               </CardContent>
             </Card>

@@ -1,8 +1,8 @@
 import { ReactNode } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useUser } from '@/contexts/UserContext';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Lock, AlertTriangle, Loader2 } from 'lucide-react';
+import { Lock, AlertTriangle } from 'lucide-react';
 
 interface RoleBasedRouteProps {
   children: ReactNode;
@@ -17,35 +17,26 @@ const RoleBasedRoute = ({
   adminOnly = false,
   userOnly = false 
 }: RoleBasedRouteProps) => {
-  const { user, isAdmin, isLoading } = useAuth();
+  const { user, isLoggedIn } = useUser();
 
-  // Show loading state while checking auth
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  // Redirect to auth if not authenticated
-  if (!user) {
-    return <Navigate to="/auth" replace />;
+  // Redirect to login if not authenticated
+  if (!isLoggedIn || !user) {
+    return <Navigate to="/login" replace />;
   }
 
   // Determine access
   let hasAccess = true;
 
-  if (adminOnly && !isAdmin) {
+  if (adminOnly && !user.isAdmin) {
     hasAccess = false;
   }
 
-  if (userOnly && isAdmin) {
+  if (userOnly && user.isAdmin) {
     hasAccess = false;
   }
 
   if (allowedRoles) {
-    const userRole = isAdmin ? 'admin' : 'user';
+    const userRole = user.isAdmin ? 'admin' : 'user';
     hasAccess = allowedRoles.includes(userRole);
   }
 
@@ -65,7 +56,7 @@ const RoleBasedRoute = ({
               <p>You don't have permission to access this page.</p>
             </div>
             <p className="text-sm text-muted-foreground">
-              {isAdmin ? 
+              {user.isAdmin ? 
                 "This section is for regular users only." :
                 "This section requires administrator privileges."
               }
