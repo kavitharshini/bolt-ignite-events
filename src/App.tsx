@@ -15,9 +15,9 @@ import AttendeesPage from "./pages/Attendees/AttendeesPage";
 import SettingsPage from "./pages/Settings/SettingsPage";
 import ProfilePage from "./pages/Profile/ProfilePage";
 import BookingsPage from "./pages/Bookings/BookingsPage";
-import LoginPage from "./components/Auth/LoginPage";
+import AuthPage from "./pages/Auth/AuthPage";
 import RoleBasedRoute from "./components/Auth/RoleBasedRoute";
-import { UserProvider } from "./contexts/UserContext";
+import { AuthProvider } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
 
@@ -27,9 +27,9 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <UserProvider>
+        <AuthProvider>
           <Routes>
-            <Route path="/login" element={<LoginPage />} />
+            <Route path="/auth" element={<AuthPage />} />
             <Route path="/" element={
               <RoleBasedRoute>
                 <Index />
@@ -88,7 +88,7 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </UserProvider>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
